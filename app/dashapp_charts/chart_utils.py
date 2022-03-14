@@ -1,6 +1,11 @@
+from sqlalchemy import func
+
 from app.extensions import db
 import psycopg2
 from config import BaseConfig
+from ..models import Stock_price, Company
+
+
 
 
 def companies_list():

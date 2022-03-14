@@ -38,7 +38,6 @@ def register_dashapps(app_name):
     dashapp_charts = dash.Dash(__name__,
                          server=app_name,
                          url_base_pathname='/dashboard/',
-                         assets_folder=get_root_path(__name__) + '/dashboard/assets/',
                          meta_tags=[meta_viewport])
 
     with app_name.app_context():
