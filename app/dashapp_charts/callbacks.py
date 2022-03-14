@@ -7,6 +7,8 @@ import plotly.express as px
 from dash.dependencies import Input, Output
 import pandas as pd
 
+from ..models import Stock_price
+
 
 def register_callbacks(dashapp):
     @dashapp.callback(
@@ -16,23 +18,11 @@ def register_callbacks(dashapp):
 
     def update_stock_graph(company):
         price_df = pd.DataFrame(columns=["trade_date", "close"])
-        result = []
         date_1='2021-06-01'
         date_2='2022-03-08'
-        try:
-            conn = psycopg2.connect(BaseConfig.SQLALCHEMY_DATABASE_URI, sslmode='require')
-            cursor = conn.cursor()
-            cursor.execute(
-            "SELECT trade_date, close FROM stock_price WHERE name=%s AND trade_date BETWEEN %s AND %s",[company,date_1,date_2])
-            result = cursor.fetchall()
-
-
-        except psycopg2.DatabaseError as error:
-            print(error)
-        finally:
-            if conn is not None:
-                conn.close()
-
+        result=Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.close).filter(
+            Stock_price.name==company, Stock_price.trade_date.between(date_1,date_2)
+        )
         price_df["trade_date"] = [x[0] for x in result]
         price_df["close"] = [x[1] for x in result]
         fig = px.line(data_frame=price_df, x="trade_date", y="close", title=str(company))

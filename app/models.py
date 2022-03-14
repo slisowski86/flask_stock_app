@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, Date
-from . import db
+from app.extensions import db
 
 class Stock_price(db.Model):
 

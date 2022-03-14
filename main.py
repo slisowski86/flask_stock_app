@@ -10,5 +10,5 @@ for x in os.environ:
 
 basedir=os.path.abspath(os.path.dirname(__file__))
 print(basedir)
-environment=os.environ.get('PWD')
+environment=os.environ.get('SECRET_KEY')
 print(environment)
