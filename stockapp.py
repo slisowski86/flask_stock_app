@@ -1,3 +1,3 @@
 from app import create_app
 
-app=create_app()
+server=create_app()
