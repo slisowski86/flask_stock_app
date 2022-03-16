@@ -4,8 +4,6 @@ from dash import dcc, html, Dash, dash
 import plotly.express as px
 from dash.dependencies import Input, Output
 import pandas as pd
-from .chart_utils import companies_list
-from .chart_utils import start_graph
 from datetime import date
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -13,6 +11,9 @@ from sqlalchemy.pool import NullPool
 from config import BaseConfig
 from ..models import Company, Stock_price
 from sqlalchemy import func
+
+import dash_bootstrap_components as dbc
+
 
 engine=create_engine(BaseConfig.SQLALCHEMY_DATABASE_URI)
 Session = sessionmaker(bind=engine)
@@ -24,11 +25,14 @@ min_date=min_date[0]
 max_date=session.query(func.max(Stock_price.trade_date)).first()
 max_date=max_date[0]
 
-layout=html.Div(
-    children=[
-        dcc.Store(id='stock_memory'),
+
+layout=html.Div(children=[
+        html.Div(className='row',
+        children=[
+        html.Div(className='four columns div-user-controls',
+        children=[dcc.Store(id='stock_memory'),
         html.H3("Stock price charts"),
-        dcc.Dropdown(companies_list, None, id="stock_dropdown"),
+        dcc.Dropdown(companies_list, None, id="stock_dropdown", style={'width':300}),
         dcc.DatePickerSingle(id="start_date",
             min_date_allowed=min_date,
             max_date_allowed=max_date,
@@ -41,10 +45,9 @@ layout=html.Div(
             initial_visible_month=max_date,
             date=max_date
         ),
-        html.Button('Pokaż wykres', id='show', n_clicks=0),
+        html.Button('Show chart', id='show', n_clicks=0),
+        html.Button('Clear', id='clear', n_clicks=0)]),
 
+    html.Div(className='eight columns div-for-charts bg-grey',children=[
+], id="stock_graph", style={'height':800,'width':800})])])
 
-
-
-        dcc.Graph(id='stock_graph')],
-    style={'height':800,'width':800})
