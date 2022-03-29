@@ -7,40 +7,58 @@ import dash
 import plotly.express as px
 from dash.dependencies import Input, Output, State
 import pandas as pd
+from datetime import timedelta, datetime
+from sqlalchemy import func
 
 from ..models import Stock_price
 
 
+
+
 def register_callbacks(dashapp):
     @dashapp.callback(
-        Output(component_id='stock_graph', component_property='children'),
-        [Input('show','n_clicks'),
-         Input('clear','n_clicks')],
+        Output(component_id='stock_graph', component_property='figure'),
+        [Input('show','n_clicks')],
         [State('stock_dropdown','value'),
         State(component_id='start_date', component_property='date'),
         State(component_id='end_date', component_property='date'),
-         State('stock_graph','children')]
+         State('stock_graph','figure')]
 
 
     )
 
-    def update_stock_graph(show_button,clear, company, start_date, end_date, children):
-        children=[]
-        template='plotly_dark'
-        price_df = pd.DataFrame(columns=["trade_date", "close"])
-        result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.close).filter(
-            Stock_price.name == company, Stock_price.trade_date.between(start_date, end_date))
-        price_df["trade_date"] = [x[0] for x in result]
-        price_df["close"] = [x[1] for x in result]
-        if show_button>0:
-            if children:
-                children[0]["props"]["figure"] = px.line(data_frame=price_df, x="trade_date", y="close", title=str(company))
-            else:
-                fig=px.line(data_frame=price_df, x="trade_date", y="close", title=str(company))
-                fig.update_layout(plot_bgcolor='#31302F', paper_bgcolor='#31302F')
-                children.append(dcc.Graph(figure=fig))
+    def update_stock_graph(show_button, company, start_date, end_date, figure):
 
-        return children
+        if show_button>0:
+            price_df = pd.DataFrame(columns=["trade_date", "close"])
+            result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.close).filter(
+            Stock_price.name == company, Stock_price.trade_date.between(start_date, end_date))
+            price_df["trade_date"] = [x[0] for x in result]
+            price_df["close"] = [x[1] for x in result]
+            figure = px.line(data_frame=price_df, x="trade_date", y="close", title=str(company))
+            company_min_date=Stock_price.query.with_entities(func.min(Stock_price.trade_date)).filter(Stock_price.name==company).first()
+            company_min_date=company_min_date[0]
+            xaxis_start_date=company_min_date
+
+
+            if datetime.strptime(start_date,'%Y-%m-%d')>datetime.strptime(str(company_min_date),'%Y-%m-%d'):
+                xaxis_start_date=start_date
+            delta_days = (datetime.strptime(end_date, '%Y-%m-%d') - datetime.strptime(str(xaxis_start_date), '%Y-%m-%d')).days
+            xaxis_end_date=datetime.strptime(end_date, '%Y-%m-%d')+timedelta(days=delta_days/20)
+            print(xaxis_end_date)
+            figure.update_layout(xaxis=dict(range=[xaxis_start_date,xaxis_end_date]))
+            return figure
+        else:
+            raise dash.exceptions.PreventUpdate
+
+
+
+
+
+
+                #children.append(dcc.Graph(figure=fig))
+
+
 
 
 

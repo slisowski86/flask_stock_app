@@ -3,7 +3,8 @@ from flask import Flask
 from flask.helpers import get_root_path
 import os
 from config import BaseConfig
-from flask_sqlalchemy import SQLAlchemy
+import dash_bootstrap_components as dbc
+
 from app.extensions import db
 import os
 assets_path = os.getcwd() +'/dashapp_charts/assets'
@@ -29,14 +30,15 @@ def register_dashapps(server):
     from app.dashapp_charts.layout import layout
     from app.dashapp_charts.callbacks import register_callbacks
 
-    assets_path = '/home/slisowski/PycharmProjects/flask_stock_app/app/dashapp_charts/assets'
+
     meta_viewport = {
         "name": "viewport",
         "content": "width=device-width, initial-scale=1, shrink-to-fit=no"}
-
+    external_stylesheets = [dbc.themes.BOOTSTRAP, "/home/slisowski/PycharmProjects/flask_stock_app/app/dashapp_charts/assets/style.css"]
     dashapp_charts = dash.Dash(__name__,
                          server=server,
-                         assets_folder=assets_path,
+                        external_stylesheets=external_stylesheets,
+                        assets_folder='/home/slisowski/PycharmProjects/flask_stock_app/app/dashapp_charts/assets',
                          url_base_pathname='/dashboard/',
                          meta_tags=[meta_viewport])
 
