@@ -160,17 +160,28 @@ sidebar = [
         html.H3("Stock price charts"),
         html.Div(className='div-for-dropdown',children=[dcc.Dropdown(companies_list(), None, id="stock_dropdown", style={'width':300})]),
 
+        dcc.RadioItems(id='disable_dropdown',options=[
+            {'label':'Choose period','value':'period'},
+            {'label':'Choose date','value':'stock_date'}
+
+        ],value='period'),
+        dcc.Dropdown(id='period_dropdown',options=[
+            {'label':'1m','value':'m'}
+        ], disabled=True),
+
         dcc.DatePickerSingle(id="start_date",
             min_date_allowed=min_date(),
             max_date_allowed=max_date(),
             initial_visible_month=min_date(),
-            date=min_date()
+            date=min_date(),
+            disabled=True
         ),
         dcc.DatePickerSingle(id="end_date",
             min_date_allowed=min_date(),
             max_date_allowed=max_date(),
             initial_visible_month=max_date(),
-            date=max_date()
+            date=max_date(),
+            disabled=True
         ),
         html.Button('Show chart', id='show', n_clicks=0)
 

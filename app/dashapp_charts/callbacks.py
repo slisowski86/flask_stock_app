@@ -53,7 +53,22 @@ def register_callbacks(dashapp):
 
 
 
+    @dashapp.callback(Output('period_dropdown','disabled'),
+                      Input('disable_dropdown','value'))
+    def disable_dropdown(disable_value):
+        if disable_value=='period':
+            return False
+        else:
+            return True
 
+    @dashapp.callback([Output('start_date', 'disabled'),
+                       Output('end_date','disabled')],
+                    Input('disable_dropdown', 'value'))
+    def disable_dropdown(disable_value):
+        if disable_value == 'stock_date':
+            return False, False
+        else:
+            return True, True
 
 
                 #children.append(dcc.Graph(figure=fig))
