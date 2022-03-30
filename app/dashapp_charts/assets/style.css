@@ -29,3 +29,11 @@ label {
 padding-top: 10px;
 padding-bottom: 10px;
 }
+.div-for-radioitems{
+width: 40%;
+display: inline-block;
+}
+.div-for-periods{
+
+display: inline-block;
+}

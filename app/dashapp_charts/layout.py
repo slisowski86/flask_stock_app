@@ -158,31 +158,40 @@ sidebar = [
                 [
         dcc.Store(id='stock_memory'),
         html.H3("Stock price charts"),
-        html.Div(className='div-for-dropdown',children=[dcc.Dropdown(companies_list(), None, id="stock_dropdown", style={'width':300})]),
-
+        html.Div(className='div-for-dropdown',children=[dcc.Dropdown(companies_list(), None, id="stock_dropdown")]),
+        html.Div(className='div-for-radioitems',children=[
         dcc.RadioItems(id='disable_dropdown',options=[
             {'label':'Choose period','value':'period'},
             {'label':'Choose date','value':'stock_date'}
 
-        ],value='period'),
+        ],value='period')]),
+        html.Div(className='div-for-periods',children=[
         dcc.Dropdown(id='period_dropdown',options=[
-            {'label':'1m','value':'m'}
-        ], disabled=True),
-
+            {'label':'1m','value':1},
+            {'label':'3m','value':3},
+            {'label':'6m','value':6},
+            {'label':'1y','value':12},
+            {'label':'3y','value':36},
+            {'label':'5y','value':60},
+            {'label':'10y','value':120},
+            {'label':'max','value':'max'}
+        ], value=1,disabled=True),
+        html.Div(children=[
         dcc.DatePickerSingle(id="start_date",
             min_date_allowed=min_date(),
             max_date_allowed=max_date(),
             initial_visible_month=min_date(),
             date=min_date(),
             disabled=True
-        ),
+        )],style={'display':'inline-block'}),
+        html.Div(children=[
         dcc.DatePickerSingle(id="end_date",
             min_date_allowed=min_date(),
             max_date_allowed=max_date(),
             initial_visible_month=max_date(),
             date=max_date(),
             disabled=True
-        ),
+        )],style={'display':'inline-block'})]),
         html.Button('Show chart', id='show', n_clicks=0)
 
                 ])])]
