@@ -148,6 +148,19 @@ header=header = dbc.Navbar(
     color="dark",
     sticky="top",
 )
+meta = [
+    html.Div(
+        id="no-display",
+        children=[
+            # Store for user created masks
+            # data is a list of dicts describing shapes
+            dcc.Store(id="date_df"),
+            dcc.Store(id="period_df"),
+            dcc.Store(id="candle_df_period"),
+            dcc.Store(id='candle_df_date')
+        ],
+    )
+]
 
 sidebar = [
     dbc.Card(
@@ -156,15 +169,16 @@ sidebar = [
             dbc.CardHeader("Tools"),
             dbc.CardBody(
                 [
-        dcc.Store(id='stock_memory'),
+
         html.H3("Stock price charts"),
         html.Div(className='div-for-dropdown',children=[dcc.Dropdown(companies_list(), None, id="stock_dropdown")]),
         html.Div(className='div-for-radioitems',children=[
         dcc.RadioItems(id='disable_dropdown',options=[
             {'label':'Choose period','value':'period'},
-            {'label':'Choose date','value':'stock_date'}
+            {'label':'Choose date','value':'stock_date'},
 
-        ],value='period')]),
+
+        ],value='period',inputStyle={'margin-bottom':'20px'})]),
         html.Div(className='div-for-periods',children=[
         dcc.Dropdown(id='period_dropdown',options=[
             {'label':'1m','value':1},
@@ -191,7 +205,16 @@ sidebar = [
             initial_visible_month=max_date(),
             date=max_date(),
             disabled=True
-        )],style={'display':'inline-block'})]),
+        )],style={'display':'inline-block'}),
+        ]),
+        html.Div(id='additional_options',children=[
+            html.Label("Choose chart type"),
+            dcc.Dropdown(id='chart_type_dropdown',options=[
+                {'label':'line','value':'line'},
+                {'label':'candlestick','value':'candle'}
+            ],value='line')
+        ],style={'padding-top':'30px','width':'40%'}),
+
         html.Button('Show chart', id='show', n_clicks=0)
 
                 ])])]
@@ -235,7 +258,8 @@ layout=html.Div(children=[
     dbc.Container(
     [
         dbc.Row(id="app-content",
-                children=[dbc.Col(sidebar, md=4), dbc.Col(chart, md=8)])
+                children=[dbc.Col(sidebar, md=4), dbc.Col(chart, md=8)]),
+        dbc.Row(dbc.Col(meta)),
     ], fluid=True
     ),
 
