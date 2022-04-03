@@ -43,13 +43,27 @@ def register_callbacks(dashapp):
         logic = {'Open': 'first',
                  'High': 'max',
                  'Low': 'min',
-                 'Close': 'last'}
+                 'Close': 'last',
+                 'Volume': 'sum'}
 
         dfw = df.resample(period).apply(logic)
-        # set the index to the beginning of the week
-        #dfw.index = dfw.index - pd.tseries.frequencies.to_offset("6D")
+
         dfw=dfw.reset_index()
+
         return dfw
+    def line_resample(df, col_date, period):
+        df[col_date] = pd.to_datetime(df[col_date])
+        df.set_index(col_date, inplace=True)
+        df.sort_index(inplace=True)
+
+        logic = {'close': 'first',
+                 'volume':'sum'}
+
+        dfw = df.resample(period).apply(logic)
+
+        dfw = dfw.reset_index()
+        return dfw
+
 
     @dashapp.callback(Output('date_df','data'),
                       [Input('stock_dropdown','value'),
@@ -60,10 +74,11 @@ def register_callbacks(dashapp):
         price_df = pd.DataFrame(columns=["trade_date", "close"])
 
 
-        result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.close).filter(
+        result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.close, Stock_price.volume).filter(
             Stock_price.name == company, Stock_price.trade_date.between(start_date, end_date))
         price_df["trade_date"] = [x[0] for x in result]
         price_df["close"] = [x[1] for x in result]
+        price_df["volume"]=[x[2] for x in result]
 
         return price_df.to_json(date_format='iso', orient='split')
 
@@ -75,21 +90,22 @@ def register_callbacks(dashapp):
 
 
         start_date_period = company_max_date(company) - relativedelta(months=period_value)
-        result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.close).filter(
+        result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.close, Stock_price.volume).filter(
         Stock_price.name == company, Stock_price.trade_date.between(start_date_period, company_max_date(company)))
         price_df["trade_date"] = [x[0] for x in result]
         price_df["close"] = [x[1] for x in result]
+        price_df["volume"] = [x[2] for x in result]
         return price_df.to_json(date_format='iso', orient='split')
 
     @dashapp.callback(Output('candle_df_period', 'data'),
                       [Input('stock_dropdown', 'value'),
                        Input('period_dropdown', 'value')])
     def make_candle_df_period(company,period_value):
-        candle_price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close'])
+        candle_price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
         start_date_period = company_max_date(company) - relativedelta(months=period_value)
         candle_result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.open,
                                                         Stock_price.high, Stock_price.low,
-                                                        Stock_price.close).filter(
+                                                        Stock_price.close, Stock_price.volume).filter(
             Stock_price.name == company,
             Stock_price.trade_date.between(start_date_period, company_max_date(company))
         ).all()
@@ -110,9 +126,9 @@ def register_callbacks(dashapp):
     def make_candle_df_date(company,start_date,end_date):
 
 
-        candle_price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close'])
+        candle_price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close','Volume'])
         candle_result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.open,
-                                                        Stock_price.high, Stock_price.low, Stock_price.close).filter(
+                                                        Stock_price.high, Stock_price.low, Stock_price.close, Stock_price.volume).filter(
             Stock_price.name == company, Stock_price.trade_date.between(start_date, end_date)
         ).all()
         for column, i in zip(candle_price_df.columns, range(len(candle_result))):
@@ -191,15 +207,17 @@ def register_callbacks(dashapp):
                 figure.update_xaxes(range=update_xaxes_range(df_period,'trade_date'))
                 print(update_xaxes_range(df_period, 'trade_date'))
         elif enable_value=='stock_date':
+
             df_date = pd.read_json(candle_df_date, orient='split')
             df_date_line = pd.read_json(date_df, orient='split')
+            interval=''
 
             if len(df_date['Date'].value_counts()) > 0:
                 max_date = (max(df_date['Date']))
                 min_date = (min(df_date['Date']))
                 max_date_dt = datetime(max_date.year, max_date.month, max_date.day)
                 min_date_dt = datetime(min_date.year, min_date.month, min_date.day)
-                interval=''
+
                 if abs(max_date_dt-min_date_dt).days > 365 and abs(max_date_dt-min_date_dt).days <=1825 :
                     df_date=candle_resample(df_date,'Date','W')
                     interval='Week'
@@ -232,6 +250,21 @@ def register_callbacks(dashapp):
                 figure.update_layout(title=str(company)+' '+interval, xaxis_rangeslider_visible=False)
 
             elif chart_type=='line' and len(df_date_line['trade_date'].value_counts())>0:
+                df_date_line['trade_date']=pd.to_datetime(df_date_line['trade_date'])
+                if len(df_date_line['trade_date'].value_counts()) > 0:
+                    max_date = (max(df_date_line['trade_date']))
+                    min_date = (min(df_date_line['trade_date']))
+                    max_date_dt = datetime(max_date.year, max_date.month, max_date.day)
+                    min_date_dt = datetime(min_date.year, min_date.month, min_date.day)
+                    interval = ''
+                    if abs(max_date_dt - min_date_dt).days > 365 and abs(max_date_dt - min_date_dt).days <= 1825:
+                        df_date_line = line_resample(df_date_line, 'trade_date', 'W')
+                        interval = 'Week'
+                    elif abs(max_date_dt - min_date_dt).days > 1825:
+                        df_date_line = line_resample(df_date_line, 'trade_date', 'M')
+                        interval = 'Month'
+                    else:
+                        interval = 'Day'
 
                 figure = px.line(data_frame=df_date_line, x="trade_date", y="close", title=str(company)+' '+interval)
                 figure.update_xaxes(range=update_xaxes_range(df_date_line, 'trade_date'))

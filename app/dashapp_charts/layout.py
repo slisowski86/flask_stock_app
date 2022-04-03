@@ -154,7 +154,7 @@ meta = [
         children=[
             # Store for user created masks
             # data is a list of dicts describing shapes
-            dcc.Store(id="date_df"),
+            dcc.Store(id="price_df"),
             dcc.Store(id="period_df"),
             dcc.Store(id="candle_df_period"),
             dcc.Store(id='candle_df_date')
