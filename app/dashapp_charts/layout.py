@@ -171,7 +171,7 @@ sidebar = [
                 [
 
         html.H3("Stock price charts"),
-        html.Div(className='div-for-dropdown',children=[dcc.Dropdown(companies_list(), None, id="stock_dropdown")]),
+        html.Div(className='div-for-dropdown',children=[dcc.Dropdown(companies_list(),value=companies_list()[0], id="stock_dropdown")]),
         html.Div(className='div-for-radioitems',children=[
         dcc.RadioItems(id='disable_dropdown',options=[
             {'label':'Choose period','value':'period'},
@@ -188,8 +188,8 @@ sidebar = [
             {'label':'3y','value':36},
             {'label':'5y','value':60},
             {'label':'10y','value':120},
-            {'label':'max','value':'max'}
-        ], value=1,disabled=True),
+            {'label':'20y', 'value': 240}
+        ],value=1,disabled=True),
         html.Div(children=[
         dcc.DatePickerSingle(id="start_date",
             min_date_allowed=min_date(),
@@ -212,7 +212,7 @@ sidebar = [
             dcc.Dropdown(id='chart_type_dropdown',options=[
                 {'label':'line','value':'line'},
                 {'label':'candlestick','value':'candle'}
-            ],value='line')
+            ], value='candle')
         ],style={'padding-top':'30px','width':'40%'}),
 
         html.Button('Show chart', id='show', n_clicks=0)
@@ -233,7 +233,7 @@ chart = [
                                 id="chart-loading",
                                 type="default",
                                 children=dcc.Graph(id='stock_graph',
-                                                   figure=make_default_graph(),
+
                                                    config={
                                                        "modeBarButtonsToAdd": [
                                                            "drawrect",
