@@ -111,32 +111,33 @@ def register_callbacks(dashapp):
     def update_figure(price_df, company, enable_value, chart_type,
                       period_value, figure):
         price_df = pd.read_json(price_df, orient='split')
+        interval = ''
         if enable_value == 'period':
-            interval = ''
+
 
             if period_value > 12 and period_value <= 60:
-                df_candle = period_resample(df_candle, 'Date', 'W')
+                price_df = period_resample(price_df, 'Date', 'W')
                 interval = 'Week'
             elif period_value > 60:
-                df_candle = candle_resample(df_candle, 'Date', 'M')
+                price_df = period_resample(price_df, 'Date', 'M')
                 interval = 'Month'
             else:
                 interval = 'Day'
             if chart_type == 'candle':
 
-                df_candle['Date'] = pd.to_datetime(df_candle['Date'])
-                date_list_all = list(datetime_range(min(df_candle['Date']), max(df_candle['Date'])))
-                diff_date = set(date_list_all) - set(df_candle['Date'])
+                price_df['Date'] = pd.to_datetime(price_df['Date'])
+                date_list_all = list(datetime_range(min(price_df['Date']), max(price_df['Date'])))
+                diff_date = set(date_list_all) - set(price_df['Date'])
                 diff_date_str = list(map(str, diff_date))
                 figure = go.Figure(go.Candlestick(
-                    x=df_candle['Date'],
-                    open=df_candle['Open'],
-                    high=df_candle['High'],
-                    low=df_candle['Low'],
-                    close=df_candle['Close']
+                    x=price_df['Date'],
+                    open=price_df['Open'],
+                    high=price_df['High'],
+                    low=price_df['Low'],
+                    close=price_df['Close']
 
                 ))
-                figure.update_xaxes(range=update_xaxes_range(df_candle, 'Date'))
+                figure.update_xaxes(range=update_xaxes_range(price_df, 'Date'))
                 if period_value <= 12:
                     figure.update_xaxes(rangebreaks=[dict(values=diff_date_str)])
                     figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
@@ -147,74 +148,73 @@ def register_callbacks(dashapp):
 
             else:
 
-                df_period = pd.read_json(period_df, orient='split')
-                figure = px.line(data_frame=df_period, x="trade_date", y="close", title=str(company))
-                figure.update_xaxes(range=update_xaxes_range(df_period, 'trade_date'))
-                print(update_xaxes_range(df_period, 'trade_date'))
+
+                figure = px.line(data_frame=price_df, x="Date", y="Close", title=str(company))
+                figure.update_xaxes(range=update_xaxes_range(price_df, 'Date'))
+                print(update_xaxes_range(price_df, 'Date'))
         elif enable_value == 'stock_date':
 
-            df_date = pd.read_json(candle_df_date, orient='split')
-            df_date_line = pd.read_json(date_df, orient='split')
-            interval = ''
 
-            if len(df_date['Date'].value_counts()) > 0:
-                max_date = (max(df_date['Date']))
-                min_date = (min(df_date['Date']))
+
+
+            if len(price_df['Date'].value_counts()) > 0:
+                max_date = (max(price_df['Date']))
+                min_date = (min(price_df['Date']))
                 max_date_dt = datetime(max_date.year, max_date.month, max_date.day)
                 min_date_dt = datetime(min_date.year, min_date.month, min_date.day)
 
                 if abs(max_date_dt - min_date_dt).days > 365 and abs(max_date_dt - min_date_dt).days <= 1825:
-                    df_date = candle_resample(df_date, 'Date', 'W')
+                    price_df = period_resample(price_df, 'Date', 'W')
                     interval = 'Week'
                 elif abs(max_date_dt - min_date_dt).days > 1825:
-                    df_date = candle_resample(df_date, 'Date', 'M')
+                    price_df = period_resample(price_df, 'Date', 'M')
                     interval = 'Month'
                 else:
                     interval = 'Day'
 
-            if chart_type == 'candle' and len(df_date['Date'].value_counts()) > 0:
+            if chart_type == 'candle' and len(price_df['Date'].value_counts()) > 0:
 
-                print()
 
-                df_date['Date'] = pd.to_datetime(df_date['Date'])
-                date_list_all = list(datetime_range(min(df_date['Date']), max(df_date['Date'])))
-                diff_date = set(date_list_all) - set(df_date['Date'])
+
+                price_df['Date'] = pd.to_datetime(price_df['Date'])
+                date_list_all = list(datetime_range(min(price_df['Date']), max(price_df['Date'])))
+                diff_date = set(date_list_all) - set(price_df['Date'])
 
                 diff_date_str = list(map(str, diff_date))
                 figure = go.Figure(go.Candlestick(
-                    x=df_date['Date'],
-                    open=df_date['Open'],
-                    high=df_date['High'],
-                    low=df_date['Low'],
-                    close=df_date['Close']
+                    x=price_df['Date'],
+                    open=price_df['Open'],
+                    high=price_df['High'],
+                    low=price_df['Low'],
+                    close=price_df['Close']
 
                 ))
-                figure.update_xaxes(range=update_xaxes_range(df_date, 'Date'))
+                figure.update_xaxes(range=update_xaxes_range(price_df, 'Date'))
                 if abs(max_date_dt - min_date_dt).days <= 365:
                     figure.update_xaxes(rangebreaks=[dict(values=diff_date_str)])
                 figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
 
-            elif chart_type == 'line' and len(df_date_line['trade_date'].value_counts()) > 0:
-                df_date_line['trade_date'] = pd.to_datetime(df_date_line['trade_date'])
-                if len(df_date_line['trade_date'].value_counts()) > 0:
-                    max_date = (max(df_date_line['trade_date']))
-                    min_date = (min(df_date_line['trade_date']))
+            elif chart_type == 'line' and len(price_df['Date'].value_counts()) > 0:
+                price_df['Date'] = pd.to_datetime(price_df['Date'])
+                if len(price_df['Date'].value_counts()) > 0:
+                    max_date = (max(price_df['Date']))
+                    min_date = (min(price_df['Date']))
                     max_date_dt = datetime(max_date.year, max_date.month, max_date.day)
                     min_date_dt = datetime(min_date.year, min_date.month, min_date.day)
                     interval = ''
                     if abs(max_date_dt - min_date_dt).days > 365 and abs(max_date_dt - min_date_dt).days <= 1825:
-                        df_date_line = line_resample(df_date_line, 'trade_date', 'W')
+                        df_date_line = period_resample(price_df, 'Date', 'W')
                         interval = 'Week'
                     elif abs(max_date_dt - min_date_dt).days > 1825:
-                        df_date_line = line_resample(df_date_line, 'trade_date', 'M')
+                        df_date_line = period_resample(price_df, 'Date', 'M')
                         interval = 'Month'
                     else:
                         interval = 'Day'
 
-                figure = px.line(data_frame=df_date_line, x="trade_date", y="close",
+                figure = px.line(data_frame=price_df, x="Date", y="Close",
                                  title=str(company) + ' ' + interval)
-                figure.update_xaxes(range=update_xaxes_range(df_date_line, 'trade_date'))
-                print(update_xaxes_range(df_date_line, 'trade_date'))
+                figure.update_xaxes(range=update_xaxes_range(price_df, 'Date'))
+                print(update_xaxes_range(price_df, 'Date'))
         else:
             raise PreventUpdate
 
