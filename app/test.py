@@ -71,13 +71,13 @@ print(type(str_dates[0]))
 candle_price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close'])
 candle_result = session.query(Stock_price.trade_date, Stock_price.open,
                                                         Stock_price.high, Stock_price.low, Stock_price.close).filter(
-            Stock_price.name == company, Stock_price.trade_date.between('2022-01-01', '2022-03-10')).all()
+            Stock_price.name == company, Stock_price.trade_date.between('2020-01-01', '2022-03-10')).all()
 
 for column, i in zip(candle_price_df.columns, range(len(candle_result))):
     candle_price_df[column] = [x[i] for x in candle_result]
 
 
-def candle_week_resample(df, col_date):
+def candle_week_resample(df, col_date, period):
     df[col_date] = pd.to_datetime(df[col_date])
     df.set_index(col_date, inplace=True)
     df.sort_index(inplace=True)
@@ -87,13 +87,13 @@ def candle_week_resample(df, col_date):
              'Low': 'min',
              'Close': 'last'}
 
-    dfw = df.resample('W').apply(logic)
+    dfw = df.resample(period).apply(logic)
     # set the index to the beginning of the week
-    dfw.index = dfw.index - pd.tseries.frequencies.to_offset("6D")
+    #dfw.index = dfw.index - pd.tseries.frequencies.to_offset("6D")
     #dfw.reset_index()
     return dfw
 
-week_df=candle_week_resample(candle_price_df,'Date')
+week_df=candle_week_resample(candle_price_df,'Date','M')
 
 week_df=week_df.reset_index()
 print(week_df.head())
