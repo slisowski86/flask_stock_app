@@ -203,10 +203,10 @@ def register_callbacks(dashapp):
                     min_date_dt = datetime(min_date.year, min_date.month, min_date.day)
                     interval = ''
                     if abs(max_date_dt - min_date_dt).days > 365 and abs(max_date_dt - min_date_dt).days <= 1825:
-                        df_date_line = period_resample(price_df, 'Date', 'W')
+                        price_df = period_resample(price_df, 'Date', 'W')
                         interval = 'Week'
                     elif abs(max_date_dt - min_date_dt).days > 1825:
-                        df_date_line = period_resample(price_df, 'Date', 'M')
+                        price_df = period_resample(price_df, 'Date', 'M')
                         interval = 'Month'
                     else:
                         interval = 'Day'
