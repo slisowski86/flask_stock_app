@@ -213,8 +213,10 @@ sidebar = [
                 {'label':'line','value':'line'},
                 {'label':'candlestick','value':'candle'}
             ], value='candle')
+        ,
         ],style={'padding-top':'30px','width':'40%'}),
-
+        dcc.RadioItems(id='volume_radio',options=[
+            {'label':'Volume','value':'volume'}]),
         html.Button('Show chart', id='show', n_clicks=0)
 
                 ])])]

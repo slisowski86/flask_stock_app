@@ -1,4 +1,5 @@
 import psycopg2
+from plotly.subplots import make_subplots
 
 import app
 from config import BaseConfig
@@ -50,6 +51,7 @@ def register_callbacks(dashapp):
         dfw=dfw.reset_index()
 
         return dfw
+
 
     @dashapp.callback(Output('period_dropdown', 'disabled'),
                       Input('disable_dropdown', 'value'))
@@ -106,12 +108,28 @@ def register_callbacks(dashapp):
                        Input('stock_dropdown', 'value'),
                        Input('disable_dropdown', 'value'),
                        Input('chart_type_dropdown', 'value'),
+                        Input('volume_radio','value'),
                        Input('period_dropdown', 'value')],
                       State('stock_graph', 'figure'))
-    def update_figure(price_df, company, enable_value, chart_type,
+    def update_figure(price_df, company, enable_value, chart_type, volume_enable,
                       period_value, figure):
         price_df = pd.read_json(price_df, orient='split')
         interval = ''
+        if len(price_df['Date'].value_counts()) > 0:
+            max_date = (max(price_df['Date']))
+            min_date = (min(price_df['Date']))
+            max_date_dt = datetime(max_date.year, max_date.month, max_date.day)
+            min_date_dt = datetime(min_date.year, min_date.month, min_date.day)
+
+            if abs(max_date_dt - min_date_dt).days > 365 and abs(max_date_dt - min_date_dt).days <= 1825:
+                price_df = period_resample(price_df, 'Date', 'W')
+                interval = 'Week'
+            elif abs(max_date_dt - min_date_dt).days > 1825:
+                price_df = period_resample(price_df, 'Date', 'M')
+                interval = 'Month'
+            else:
+                interval = 'Day'
+
         if enable_value == 'period':
 
 
@@ -124,6 +142,8 @@ def register_callbacks(dashapp):
             else:
                 interval = 'Day'
             if chart_type == 'candle':
+
+
 
                 price_df['Date'] = pd.to_datetime(price_df['Date'])
                 date_list_all = list(datetime_range(min(price_df['Date']), max(price_df['Date'])))
@@ -144,6 +164,28 @@ def register_callbacks(dashapp):
                 else:
                     figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
 
+                if volume_enable=='volume':
+                    figure = make_subplots(rows=2, cols=1, shared_xaxes=True,
+                                        vertical_spacing=0.03, subplot_titles=(str(company)+' '+interval, 'Volume'),
+                                        row_width=[0.2, 0.7])
+                    figure.add_trace(go.Candlestick(
+                    x=price_df['Date'],
+                    open=price_df['Open'],
+                    high=price_df['High'],
+                    low=price_df['Low'],
+                    close=price_df['Close']
+
+                ))
+                    figure.update_xaxes(range=update_xaxes_range(price_df, 'Date'))
+                    if period_value <= 12:
+                        figure.update_xaxes(rangebreaks=[dict(values=diff_date_str)])
+                        figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
+                    else:
+                        figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
+
+                    figure.add_trace(go.Bar(x=price_df['Date'], y=price_df['Volume'], showlegend=False), row=2, col=1)
+
+
 
 
             else:
@@ -157,20 +199,6 @@ def register_callbacks(dashapp):
 
 
 
-            if len(price_df['Date'].value_counts()) > 0:
-                max_date = (max(price_df['Date']))
-                min_date = (min(price_df['Date']))
-                max_date_dt = datetime(max_date.year, max_date.month, max_date.day)
-                min_date_dt = datetime(min_date.year, min_date.month, min_date.day)
-
-                if abs(max_date_dt - min_date_dt).days > 365 and abs(max_date_dt - min_date_dt).days <= 1825:
-                    price_df = period_resample(price_df, 'Date', 'W')
-                    interval = 'Week'
-                elif abs(max_date_dt - min_date_dt).days > 1825:
-                    price_df = period_resample(price_df, 'Date', 'M')
-                    interval = 'Month'
-                else:
-                    interval = 'Day'
 
             if chart_type == 'candle' and len(price_df['Date'].value_counts()) > 0:
 
@@ -196,20 +224,7 @@ def register_callbacks(dashapp):
 
             elif chart_type == 'line' and len(price_df['Date'].value_counts()) > 0:
                 price_df['Date'] = pd.to_datetime(price_df['Date'])
-                if len(price_df['Date'].value_counts()) > 0:
-                    max_date = (max(price_df['Date']))
-                    min_date = (min(price_df['Date']))
-                    max_date_dt = datetime(max_date.year, max_date.month, max_date.day)
-                    min_date_dt = datetime(min_date.year, min_date.month, min_date.day)
-                    interval = ''
-                    if abs(max_date_dt - min_date_dt).days > 365 and abs(max_date_dt - min_date_dt).days <= 1825:
-                        price_df = period_resample(price_df, 'Date', 'W')
-                        interval = 'Week'
-                    elif abs(max_date_dt - min_date_dt).days > 1825:
-                        price_df = period_resample(price_df, 'Date', 'M')
-                        interval = 'Month'
-                    else:
-                        interval = 'Day'
+
 
                 figure = px.line(data_frame=price_df, x="Date", y="Close",
                                  title=str(company) + ' ' + interval)

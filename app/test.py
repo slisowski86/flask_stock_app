@@ -1,3 +1,5 @@
+import json
+
 import psycopg2
 
 import app
@@ -68,16 +70,8 @@ print(sorted(diff))
 str_dates=list(map(str,diff))
 print(type(str_dates[0]))
 
-candle_price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close'])
-candle_result = session.query(Stock_price.trade_date, Stock_price.open,
-                                                        Stock_price.high, Stock_price.low, Stock_price.close).filter(
-            Stock_price.name == company, Stock_price.trade_date.between('2020-01-01', '2022-03-10')).all()
 
-for column, i in zip(candle_price_df.columns, range(len(candle_result))):
-    candle_price_df[column] = [x[i] for x in candle_result]
-
-
-def candle_week_resample(df, col_date, period):
+def period_resample(df, col_date, period):
     df[col_date] = pd.to_datetime(df[col_date])
     df.set_index(col_date, inplace=True)
     df.sort_index(inplace=True)
@@ -85,23 +79,42 @@ def candle_week_resample(df, col_date, period):
     logic = {'Open': 'first',
              'High': 'max',
              'Low': 'min',
-             'Close': 'last'}
+             'Close': 'last',
+             'Volume': 'sum'}
 
     dfw = df.resample(period).apply(logic)
-    # set the index to the beginning of the week
-    #dfw.index = dfw.index - pd.tseries.frequencies.to_offset("6D")
-    #dfw.reset_index()
+
+    dfw = dfw.reset_index()
+
     return dfw
 
-week_df=candle_week_resample(candle_price_df,'Date','M')
+def candle_df():
+    candle_price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close','Volume'])
+    interval=''
+    candle_result = session.query(Stock_price.trade_date, Stock_price.open,
+                                                        Stock_price.high, Stock_price.low, Stock_price.close, Stock_price.volume).filter(
+                Stock_price.name == company, Stock_price.trade_date.between('2020-03-01', '2022-03-10')).all()
 
-week_df=week_df.reset_index()
-print(week_df.head())
-c_date=company_max_date('LPP')
-c_date_dt=datetime(c_date.year, c_date.month, c_date.day)
-print(c_date_dt-relativedelta(months=2))
-a_date = datetime.strptime("2019-01-13", "%Y-%m-%d")
-print(a_date)
-print(company_max_date('LPP'))
-print(company_min_date('LPP'))
-print(abs(company_max_date('LPP')-company_min_date('LPP')).days)
+    for column, i in zip(candle_price_df.columns, range(len(candle_result))):
+        candle_price_df[column] = [x[i] for x in candle_result]
+    if len(candle_price_df['Date'].value_counts()) > 0:
+        max_date = (max(candle_price_df['Date']))
+        min_date = (min(candle_price_df['Date']))
+        max_date_dt = datetime(max_date.year, max_date.month, max_date.day)
+        min_date_dt = datetime(min_date.year, min_date.month, min_date.day)
+
+        if abs(max_date_dt - min_date_dt).days > 365 and abs(max_date_dt - min_date_dt).days <= 1825:
+            candle_price_df = period_resample(candle_price_df, 'Date', 'W')
+            interval = 'Week'
+        elif abs(max_date_dt - min_date_dt).days > 1825:
+            candle_price_df= period_resample(candle_price_df, 'Date', 'M')
+            interval = 'Month'
+        else:
+            interval = 'Day'
+
+        [candle_price_df.to_json(date_format='iso', orient='split'),{'interval':interval}]
+    return
+
+df=pd.read_json(candle_df()[0], orient='split')
+
+print(df.head())
