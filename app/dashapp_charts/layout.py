@@ -155,9 +155,8 @@ meta = [
             # Store for user created masks
             # data is a list of dicts describing shapes
             dcc.Store(id="price_df"),
-            dcc.Store(id="period_df"),
-            dcc.Store(id="candle_df_period"),
-            dcc.Store(id='candle_df_date')
+            dcc.Store(id="interval")
+
         ],
     )
 ]
@@ -214,10 +213,8 @@ sidebar = [
                 {'label':'candlestick','value':'candle'}
             ], value='candle')
         ,
-        ],style={'padding-top':'30px','width':'40%'}),
-        dcc.RadioItems(id='volume_radio',options=[
-            {'label':'Volume','value':'volume'}]),
-        html.Button('Show chart', id='show', n_clicks=0)
+        ],style={'padding-top':'30px','width':'40%'})
+
 
                 ])])]
 

@@ -88,33 +88,8 @@ def period_resample(df, col_date, period):
 
     return dfw
 
-def candle_df():
-    candle_price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close','Volume'])
-    interval=''
-    candle_result = session.query(Stock_price.trade_date, Stock_price.open,
-                                                        Stock_price.high, Stock_price.low, Stock_price.close, Stock_price.volume).filter(
-                Stock_price.name == company, Stock_price.trade_date.between('2020-03-01', '2022-03-10')).all()
 
-    for column, i in zip(candle_price_df.columns, range(len(candle_result))):
-        candle_price_df[column] = [x[i] for x in candle_result]
-    if len(candle_price_df['Date'].value_counts()) > 0:
-        max_date = (max(candle_price_df['Date']))
-        min_date = (min(candle_price_df['Date']))
-        max_date_dt = datetime(max_date.year, max_date.month, max_date.day)
-        min_date_dt = datetime(min_date.year, min_date.month, min_date.day)
 
-        if abs(max_date_dt - min_date_dt).days > 365 and abs(max_date_dt - min_date_dt).days <= 1825:
-            candle_price_df = period_resample(candle_price_df, 'Date', 'W')
-            interval = 'Week'
-        elif abs(max_date_dt - min_date_dt).days > 1825:
-            candle_price_df= period_resample(candle_price_df, 'Date', 'M')
-            interval = 'Month'
-        else:
-            interval = 'Day'
 
-        [candle_price_df.to_json(date_format='iso', orient='split'),{'interval':interval}]
-    return
 
-df=pd.read_json(candle_df()[0], orient='split')
-
-print(df.head())
+print()
