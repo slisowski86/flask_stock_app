@@ -31,6 +31,8 @@ def register_dashapps(server):
     from app.dashapp_charts.callbacks_store import register_callbacks
 
 
+
+
     meta_viewport = {
         "name": "viewport",
         "content": "width=device-width, initial-scale=1, shrink-to-fit=no"}
@@ -46,6 +48,8 @@ def register_dashapps(server):
         dashapp_charts.title = 'WIG20 Charts'
         dashapp_charts.layout = layout
         register_callbacks(dashapp_charts)
+
+
 
 
 def register_blueprints(server):

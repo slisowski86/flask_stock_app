@@ -211,8 +211,14 @@ sidebar = [
             dcc.Dropdown(id='chart_type_dropdown',options=[
                 {'label':'line','value':'line'},
                 {'label':'candlestick','value':'candle'}
-            ], value='candle')
-        ,
+            ], value='candle'),
+        dcc.Dropdown(id='indicators',options=[
+                {'label':'MACD','value':'macd'},
+
+            ], value='macd')
+
+
+
         ],style={'padding-top':'30px','width':'40%'})
 
 
@@ -247,7 +253,7 @@ chart = [
                                                    },
                                                    )
                             )
-                        ]
+                        ], style={'height':'500px'}
                     )
                 ])])]
 

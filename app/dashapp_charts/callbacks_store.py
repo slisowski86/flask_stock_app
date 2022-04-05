@@ -14,25 +14,23 @@ from datetime import timedelta, datetime
 from sqlalchemy import func
 from dateutil.relativedelta import relativedelta
 import plotly.graph_objects as go
+from .chart_utils import *
 from ..models import Stock_price
 from dash.exceptions import PreventUpdate
 
 def register_callbacks(dashapp):
-    def company_min_date(company):
-        company_date = Stock_price.query.with_entities(func.min(Stock_price.trade_date)).filter(
-            Stock_price.name == company).first()
-        return company_date[0]
+    def diff_dates(df, col_date):
+        date_list_all = list(datetime_range(min(df[col_date]), max(df[col_date])))
+        diff_date = set(date_list_all) - set(df[col_date])
+        diff_date_str = list(map(str, diff_date))
+        return diff_date_str
+
 
     def company_max_date(company):
         company_date = Stock_price.query.with_entities(func.max(Stock_price.trade_date)).filter(
             Stock_price.name == company).first()
         return company_date[0]
 
-    def update_xaxes_range(df, col_date):
-        df[col_date] = pd.to_datetime(df[col_date])
-        delta_days = (max(df[col_date]) - min(df[col_date])).days
-        xaxis_end_date = max(df[col_date]) + timedelta(delta_days / 20)
-        return [str(min(df[col_date])), str(xaxis_end_date)]
 
     def datetime_range(start=None, end=None):
         span = end - start
@@ -84,20 +82,20 @@ def register_callbacks(dashapp):
                        Input('disable_dropdown', 'value')])
     def make_price_df(company, start_date, end_date, period_value, enable_value):
         price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
-        interval=''
+
         if enable_value == 'stock_date':
 
 
-                candle_result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.open,
+            candle_result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.open,
                                                             Stock_price.high, Stock_price.low, Stock_price.close,
                                                             Stock_price.volume).filter(
-                Stock_price.name == company, Stock_price.trade_date.between(start_date, end_date)
+            Stock_price.name == company, Stock_price.trade_date.between(start_date, end_date)
             ).all()
-                for column, i in zip(price_df.columns, range(len(candle_result))):
+            for column, i in zip(price_df.columns, range(len(candle_result))):
                     price_df[column] = [x[i] for x in candle_result]
 
         else:
-            price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
+
             start_date_period = company_max_date(company) - relativedelta(months=period_value)
             candle_result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.open,
                                                             Stock_price.high, Stock_price.low,
@@ -130,20 +128,18 @@ def register_callbacks(dashapp):
     @dashapp.callback(Output('stock_graph', 'figure'),
                       [
                           Input('price_df', 'data'),
-
+                          Input('indicators','value'),
                           Input('interval','value'),
                           Input('stock_dropdown', 'value'),
                           Input('disable_dropdown', 'value'),
                           Input('chart_type_dropdown', 'value'),
                         Input('period_dropdown', 'value')],
                       State('stock_graph', 'figure'))
-    def update_figure(price_df, interval_df, company, enable_value, chart_type,
+    def update_figure(price_df, indicator, interval_df, company, enable_value, chart_type,
                       period_value, figure):
         price_df = pd.read_json(price_df, orient='split')
         interval=interval_df
-        date_list_all = list(datetime_range(min(price_df['Date']), max(price_df['Date'])))
-        diff_date = set(date_list_all) - set(price_df['Date'])
-        diff_date_str = list(map(str, diff_date))
+
         max_date = (max(price_df['Date']))
         min_date = (min(price_df['Date']))
         max_date_dt = datetime(max_date.year, max_date.month, max_date.day)
@@ -151,100 +147,32 @@ def register_callbacks(dashapp):
 
 
         if enable_value == 'period':
-
-
-            if chart_type == 'candle':
-
-
-
-                figure = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                                       vertical_spacing=0.1,
-                                       subplot_titles=(str(company) + ' ' + interval, 'Volume'),
-                                       row_width=[0.2, 0.7])
-                figure.add_trace(go.Candlestick(
-                    x=price_df['Date'],
-                    open=price_df['Open'],
-                    high=price_df['High'],
-                    low=price_df['Low'],
-                    close=price_df['Close']
-
-                ))
-                figure.add_trace(go.Bar(x=price_df['Date'], y=price_df['Volume'], showlegend=False), row=2,
-                                 col=1)
-                figure.update_xaxes(range=update_xaxes_range(price_df, 'Date'))
-                if period_value <= 12:
-                    figure.update_xaxes(rangebreaks=[dict(values=diff_date_str)])
-                    figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
-                else:
-                    figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
-
-
-
-
-
+            if chart_type=='candle':
+                figure=make_subplot_candle(price_df,company,interval)
 
             else:
 
-                figure = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                                       vertical_spacing=0.1,
-                                       subplot_titles=(str(company) + ' ' + interval, 'Volume'),
-                                       row_width=[0.2, 0.7])
+                figure = make_subplot_line(price_df,company,interval)
 
-                figure.add_trace(go.Scatter(
-                    x=price_df['Date'],
-                    y=price_df['Close']
+            if period_value <= 12:
+                figure.update_xaxes(rangebreaks=[dict(values=diff_dates(price_df, 'Date'))])
 
-                ))
-                figure.add_trace(go.Bar(x=price_df['Date'], y=price_df['Volume'], showlegend=False), row=2,
-                                 col=1)
-                if period_value<=12:
-                    figure.update_xaxes(rangebreaks=[dict(values=diff_date_str)])
-                figure.update_xaxes(range=update_xaxes_range(price_df, 'Date'))
-                print(update_xaxes_range(price_df, 'Date'))
+
+
+
         elif enable_value == 'stock_date':
 
             if chart_type == 'candle':
+                figure=make_subplot_candle(price_df,company,interval)
 
-                price_df['Date'] = pd.to_datetime(price_df['Date'])
 
-                figure = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                                       vertical_spacing=0.1,
-                                       subplot_titles=(str(company) + ' ' + interval, 'Volume'),
-                                       row_width=[0.2, 0.7])
-                figure.add_trace(go.Candlestick(
-                    x=price_df['Date'],
-                    open=price_df['Open'],
-                    high=price_df['High'],
-                    low=price_df['Low'],
-                    close=price_df['Close']
+            else:
+                figure=make_subplot_line(price_df,company,interval)
 
-                ))
-                figure.add_trace(go.Bar(x=price_df['Date'], y=price_df['Volume'], showlegend=False), row=2,
-                                 col=1)
-                figure.update_xaxes(range=update_xaxes_range(price_df, 'Date'))
-                if abs(max_date_dt - min_date_dt).days <= 365:
-                    figure.update_xaxes(rangebreaks=[dict(values=diff_date_str)])
-                figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
+            if abs(max_date_dt - min_date_dt).days <= 365:
+                figure.update_xaxes(rangebreaks=[dict(values=diff_dates(price_df, 'Date'))])
 
-            elif chart_type == 'line':
-                price_df['Date'] = pd.to_datetime(price_df['Date'])
 
-                figure = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                                       vertical_spacing=0.1,
-                                       subplot_titles=(str(company) + ' ' + interval, 'Volume'),
-                                       row_width=[0.2, 0.7])
-
-                figure.add_trace(go.Scatter(
-                    x=price_df['Date'],
-                    y=price_df['Close']
-
-                ))
-                figure.add_trace(go.Bar(x=price_df['Date'], y=price_df['Volume'], showlegend=False), row=2,
-                                 col=1)
-                if abs(max_date_dt - min_date_dt).days <= 365:
-                    figure.update_xaxes(rangebreaks=[dict(values=diff_date_str)])
-                figure.update_xaxes(range=update_xaxes_range(price_df, 'Date'))
-                print(update_xaxes_range(price_df, 'Date'))
         else:
             raise PreventUpdate
 
