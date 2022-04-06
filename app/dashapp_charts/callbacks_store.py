@@ -11,12 +11,15 @@ import plotly.express as px
 from dash.dependencies import Input, Output, State
 import pandas as pd
 from datetime import timedelta, datetime
-from sqlalchemy import func
+from sqlalchemy import func, create_engine
+from sqlalchemy.orm import sessionmaker
 from dateutil.relativedelta import relativedelta
 import plotly.graph_objects as go
 from .chart_utils import *
 from ..models import Stock_price
+from .indicators import *
 from dash.exceptions import PreventUpdate
+from ..extensions import db
 
 def register_callbacks(dashapp):
     def diff_dates(df, col_date):
@@ -73,28 +76,55 @@ def register_callbacks(dashapp):
 
     @dashapp.callback([Output('price_df', 'data'),
                        Output('interval','value')],
-
-                      [Input('stock_dropdown', 'value'),
+                        [Input('stock_dropdown', 'value'),
                        Input(component_id='start_date', component_property='date'),
                        Input(component_id='end_date', component_property='date'),
-
+                       Input('indicators','value'),
                        Input('period_dropdown', 'value'),
                        Input('disable_dropdown', 'value')])
-    def make_price_df(company, start_date, end_date, period_value, enable_value):
+    def make_price_df(company, start_date, end_date,indicator, period_value, enable_value):
         price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
+        #indicators_dict={'macd':macd(price_df,'Close'),
+                         #'rsi':rsi(price_df,'Close')}
+        indicators_period={'macd':33,
+                           'rsi':14}
+
+        engine = create_engine(BaseConfig.SQLALCHEMY_DATABASE_URI)
+        Session = sessionmaker(bind=engine)
+        session = Session()
 
         if enable_value == 'stock_date':
 
 
-            candle_result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.open,
+            result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.open,
                                                             Stock_price.high, Stock_price.low, Stock_price.close,
                                                             Stock_price.volume).filter(
             Stock_price.name == company, Stock_price.trade_date.between(start_date, end_date)
             ).all()
-            for column, i in zip(price_df.columns, range(len(candle_result))):
-                    price_df[column] = [x[i] for x in candle_result]
+            for column, i in zip(price_df.columns, range(len(result))):
+                    price_df[column] = [x[i] for x in result]
+            #if indicator is not None:
+                #indicator_start_id=session.execute("WITH CTE AS (SELECT id, trade_date FROM stock_price WHERE name=:company AND trade_date BETWEEN :start_date AND :end_date FETCH FIRST ROW ONLY ) SELECT id-:ind_period FROM CTE",
+                                   #{'company':company, 'ind_period':indicators_period[indicator],'start_date':start_date, 'end_date':end_date}).all()
+                #back_date_id = indicator_start_id[0][0]
+                #start_date_indicator = Stock_price.query.with_entities(Stock_price.trade_date).filter(Stock_price.id == back_date_id).all()
+                #print(start_date_indicator[0][0])
+                #result_for_indicator = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.open,
+                                           #Stock_price.high, Stock_price.low, Stock_price.close,
+                                           #Stock_price.volume).filter(
+                #Stock_price.name == company, Stock_price.trade_date.between(start_date_indicator[0][0], end_date)).all()
+
+                #for column, i in zip(price_df.columns, range(len(result_for_indicator))):
+                    #price_df[column] = [x[i] for x in result_for_indicator]
+
+                #else:price_df[indicator]=indicators_dict[indicator]
+                #price_df['Date']=pd.to_datetime(price_df['Date'])
+                #price_df=price_df[price_df['Date']>=datetime.strptime(start_date,'%Y-%m-%d')]
+
+
 
         else:
+            print(price_df.head())
 
             start_date_period = company_max_date(company) - relativedelta(months=period_value)
             candle_result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.open,
@@ -149,6 +179,7 @@ def register_callbacks(dashapp):
         if enable_value == 'period':
             if chart_type=='candle':
                 figure=make_subplot_candle(price_df,company,interval)
+
 
             else:
 

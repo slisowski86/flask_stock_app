@@ -37,54 +37,6 @@ def max_date():
     max_date=max_date[0]
     return max_date
 
-def make_default_graph():
-    fig=go.Figure()
-    fig.update_xaxes(range=[0,18])
-    fig.add_trace(
-        go.Scatter(
-            x=[1,2,3,4,5],
-            y=[5,1,4,1,5],
-            mode="lines",
-            line=dict(color='royalblue', width=4),
-            showlegend=False)
-        )
-    fig.add_trace(
-        go.Scatter(
-            x=[6,6],
-            y=[1,5],
-            mode="lines",
-            line=dict(color='royalblue', width=4),
-            showlegend=False)
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=[8,9,9,7,7,9,9],
-            y=[3,3,1,1,5,5,4],
-            mode="lines",
-            line=dict(color='royalblue', width=4),
-            showlegend=False)
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=[11,11,13,13,11,11,13],
-            y=[4, 5, 5, 3, 2, 1, 1],
-            mode="lines",
-            line=dict(color='royalblue', width=4),
-            showlegend=False)
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=[14, 14, 16, 16, 14],
-            y=[1, 5, 5, 1, 1],
-            mode="lines",
-            line=dict(color='royalblue', width=4),
-            showlegend=False)
-    )
-
-
-    return fig
-
-
 
 
 button_gitlab = dbc.Button(
@@ -155,7 +107,8 @@ meta = [
             # Store for user created masks
             # data is a list of dicts describing shapes
             dcc.Store(id="price_df"),
-            dcc.Store(id="interval")
+            dcc.Store(id="interval"),
+            dcc.Store(id='price_df_indicator')
 
         ],
     )
@@ -214,8 +167,9 @@ sidebar = [
             ], value='candle'),
         dcc.Dropdown(id='indicators',options=[
                 {'label':'MACD','value':'macd'},
+                {'label':'RSI','value':'rsi'}
 
-            ], value='macd')
+            ])
 
 
 
@@ -253,7 +207,7 @@ chart = [
                                                    },
                                                    )
                             )
-                        ], style={'height':'500px'}
+                        ]
                     )
                 ])])]
 

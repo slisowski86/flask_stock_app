@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, Date
 from app.extensions import db
 
 class Stock_price(db.Model):
-
+    id = Column(Integer, autoincrement=True, primary_key=True)
     short_name=Column(String, primary_key=True)
     name=Column(String)
     trade_date=Column(Date, primary_key=True)
