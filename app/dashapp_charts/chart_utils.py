@@ -64,6 +64,7 @@ def make_subplot_candle(df, company, interval):
         close=df['Close']
 
     ))
+
     figure.add_trace(go.Bar(x=df['Date'], y=df['Volume'], showlegend=False), row=2,
                      col=1)
 
@@ -92,12 +93,11 @@ def make_subplot_line(df, company, interval):
     figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
     return figure
 
-def make_subplot_candle_indicator(df, company, interval,indicator):
-
+def make_figure_for_indicator(df,company,interval,indicator):
     figure = make_subplots(rows=3, cols=1, shared_xaxes=True,
                            vertical_spacing=0.042,
                            subplot_titles=(str(company) + ' ' + interval, 'Volume', indicator),
-                           row_width=[0.17,0.17, 0.58])
+                           row_width=[0.17, 0.17, 0.58])
 
     figure.update_layout(height=900)
     figure.add_trace(go.Candlestick(
@@ -111,12 +111,30 @@ def make_subplot_candle_indicator(df, company, interval,indicator):
 
     figure.add_trace(go.Bar(x=df['Date'], y=df['Volume'], showlegend=False), row=2,
                      col=1)
+    return figure
+
+def make_subplot_candle_indicator(df, company, interval,indicator):
+    indicators_dict = {'macd': macd_figure,
+                       'rsi': rsi_figure,
+                        'adx': adx_figure}
+
+    figure = make_figure_for_indicator(df,company,interval,indicator)
 
 
-    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator]), row=3, col=1)
+    indicators_dict[indicator](figure,df,indicator)
 
     figure.update_xaxes(range=update_xaxes_range(df, 'Date'))
     figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
 
     return figure
+
+def macd_figure(figure,df,indicator):
+    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator]), row=3, col=1)
+    figure.add_trace(go.Scatter(x=df['Date'], y=df['macd_sig']), row=3, col=1)
+    figure.add_trace(go.Bar(x=df['Date'], y=df['macd_hist']), row=3, col=1)
+def rsi_figure(figure,df,indicator):
+    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator]), row=3, col=1)
+    figure.add_hline(y=70, line_dash="dot", row=3, col="all")
+def adx_figure(figure,df,indicator):
+    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator]), row=3, col=1)
 

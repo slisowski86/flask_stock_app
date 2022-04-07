@@ -85,6 +85,9 @@ def register_callbacks(dashapp):
     def make_price_df(company, indicator, period_value):
         price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
         start_date_period = company_max_date(company) - relativedelta(months=period_value)
+        indicators_dict = {'macd': macd_all,
+                           'rsi': rsi,
+                           'adx': adx}
 
         interval=''
         #max_date_dt = datetime.strptime(end_date, '%Y-%m-%d')
@@ -96,7 +99,8 @@ def register_callbacks(dashapp):
 
         if indicator is not None:
             indicators_period = {'macd': 33,
-                                 'rsi': 14}
+                                 'rsi': 14,
+                                 'adx':27}
             indicators_period_value = 0
 
             if period_value > 12 and period_value <= 60:
@@ -138,10 +142,22 @@ def register_callbacks(dashapp):
             else:
                 interval = 'Day'
 
-            indicators_dict = {'macd': macd(price_df, 'Close')}
-            price_df[indicator] = indicators_dict[indicator]
+            indicators_args={
+                'macd':[price_df['Close']],
+                'rsi':[price_df['Close']],
+                'adx':[price_df['High'],price_df['Low'],price_df['Close']]
+            }
+            if indicator=='macd':
+                price_df[indicator] = indicators_dict[indicator](price_df['Close'])[0]
+                price_df['macd_sig']=indicators_dict[indicator](price_df['Close'])[1]
+                price_df['macd_hist'] = indicators_dict[indicator](price_df['Close'])[2]
+            else:
+
+                price_df[indicator] = indicators_dict[indicator](*indicators_args[indicator])
+
             price_df['Date'] = pd.to_datetime(price_df['Date'])
             price_df = price_df[price_df['Date'] >= datetime.strptime(str(start_date_period), '%Y-%m-%d')]
+            print(price_df.head())
         else:
             result = Stock_price.query.with_entities(Stock_price.trade_date, Stock_price.open,
                                                      Stock_price.high, Stock_price.low, Stock_price.close,

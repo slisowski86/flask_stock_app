@@ -33,7 +33,7 @@ end_date='2022-03-10'
 dt_start_date=datetime.strptime(start_date, '%Y-%m-%d').date()
 rsi_length=14
 start_date_before=dt_start_date-timedelta(days=rsi_length)
-print(start_date_before)
+
 price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
 price_df_rsi = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
 
@@ -61,9 +61,9 @@ result_14=result = session.execute("WITH CTE AS (SELECT id, trade_date FROM stoc
                                    {'start_date':start_date, 'end_date':end_date}).all()
 
 back_date_id=result_14[0][0]
-print(back_date_id)
+
 start_date_14=session.query(Stock_price.trade_date).filter(Stock_price.id==back_date_id).first()
-print(start_date_14[0])
+
 
 result_for_rsi=session.query(Stock_price.trade_date, Stock_price.open,
                                                             Stock_price.high, Stock_price.low, Stock_price.close,
@@ -73,46 +73,21 @@ result_for_rsi=session.query(Stock_price.trade_date, Stock_price.open,
 for column, i in zip(price_df_rsi.columns, range(len(result_for_rsi))):
     price_df_rsi[column] = [x[i] for x in result_for_rsi]
 
-print(price_df.info())
-print(price_df_rsi.info())
 
+indicators_dict = {'macd': macd_all,
+                           'rsi': rsi,
+                            'adx':adx}
 
-price_df['MACD']=ta.MACD(price_df['Close'], fastperiod=12, slowperiod=26, signalperiod=9)[0]
-price_df_rsi['MACD']=ta.MACD(price_df_rsi['Close'], fastperiod=12, slowperiod=26, signalperiod=9)[0]
+price_df['MACD']=indicators_dict['macd'](price_df['Close'])[0]
+price_df['MACD_sig']=indicators_dict['macd'](price_df['Close'])[1]
+price_df['macd_hist']=indicators_dict['macd'](price_df['Close'])[2]
 
-print(price_df)
-print(price_df_rsi)
+indicators_args={
+                'macd':[price_df['Close']],
+                'rsi':[price_df['Close']],
+                'adx':[price_df['High'],price_df['Low'],price_df['Close']]
+            }
 
-
-figure = make_subplots(rows=3, cols=1, shared_xaxes=True,
-                           vertical_spacing=0.042,
-                           subplot_titles=(str(company),'Volume'),
-                           row_width=[0.17,0.17, 0.58])
-
-figure.update_layout(height=900)
-figure.add_trace(go.Candlestick(
-    x=price_df['Date'],
-    open=price_df['Open'],
-    high=price_df['High'],
-    low=price_df['Low'],
-    close=price_df['Close']
-
-),row=1,col=1)
-
-set_df=price_df_rsi.dropna()
-
-
-figure.add_trace(go.Bar(x=price_df['Date'], y=price_df['Volume'], showlegend=False), row=2,
-                 col=1)
-
-figure.add_trace(go.Scatter(x=price_df['Date'], y=set_df['MACD'], showlegend=False), row=3,
-                 col=1)
-
-print(price_df.head(34))
-print(price_df_rsi.head(34))
-print(price_df_rsi.info())
-price_df_rsi['Date']=pd.to_datetime(price_df_rsi['Date'])
-set_df=price_df_rsi[price_df_rsi['Date']>=datetime.strptime(start_date,'%Y-%m-%d')]
-
-print(set_df)
-
+print(len(indicators_args['adx']))
+adx_v=indicators_dict['rsi'](price_df['Close'])
+print(adx_v)

@@ -124,9 +124,10 @@ sidebar = [
 
         html.H3("Stock price charts"),
         html.Div(className='div-for-dropdown',children=[dcc.Dropdown(companies_list(),value=companies_list()[0], id="stock_dropdown")]),
+        html.Div(id='period_label',children=[html.Label('Choose period')], style={'width':'40%'}),
 
-        html.Label('Choose period'),
         html.Div(className='div-for-periods',children=[
+
         dcc.Dropdown(id='period_dropdown',options=[
             {'label':'1m','value':1},
             {'label':'3m','value':3},
@@ -138,16 +139,18 @@ sidebar = [
             {'label':'20y', 'value': 240}
         ],value=1),
 
-        ], style={'width':'100px','display':'inline-block'}),
+        ], style={'width':'50%','display':'inline-block'}),
         html.Div(id='additional_options',children=[
             html.Label("Choose chart type"),
             dcc.Dropdown(id='chart_type_dropdown',options=[
                 {'label':'line','value':'line'},
                 {'label':'candlestick','value':'candle'}
             ], value='candle'),
+            html.Label('Choose indicator'),
         dcc.Dropdown(id='indicators',options=[
                 {'label':'MACD','value':'macd'},
-                {'label':'RSI','value':'rsi'}
+                {'label':'RSI','value':'rsi'},
+            {'label':'ADX','value':'adx'}
 
             ])
 
