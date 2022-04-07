@@ -111,15 +111,9 @@ def make_subplot_candle_indicator(df, company, interval,indicator):
 
     figure.add_trace(go.Bar(x=df['Date'], y=df['Volume'], showlegend=False), row=2,
                      col=1)
-    indicators_dict = {'macd': macd_all(df, 'Close'),
-                       'rsi': rsi(df, 'Close')}
-    if indicator=='macd':
 
-        figure.add_trace(go.Scatter(x=df['Date'], y=indicators_dict[indicator][0]), row=3, col=1)
-        figure.add_trace(go.Scatter(x=df['Date'], y=indicators_dict[indicator][1]), row=3, col=1)
-        figure.add_trace(go.Bar(x=df['Date'], y=indicators_dict[indicator][2]), row=3, col=1)
-    else:
-        figure.add_trace(go.Scatter(x=df['Date'], y=indicators_dict[indicator]), row=3, col=1)
+
+    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator]), row=3, col=1)
 
     figure.update_xaxes(range=update_xaxes_range(df, 'Date'))
     figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)

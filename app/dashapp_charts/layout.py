@@ -108,7 +108,7 @@ meta = [
             # data is a list of dicts describing shapes
             dcc.Store(id="price_df"),
             dcc.Store(id="interval"),
-            dcc.Store(id='price_df_indicator')
+
 
         ],
     )
@@ -124,13 +124,8 @@ sidebar = [
 
         html.H3("Stock price charts"),
         html.Div(className='div-for-dropdown',children=[dcc.Dropdown(companies_list(),value=companies_list()[0], id="stock_dropdown")]),
-        html.Div(className='div-for-radioitems',children=[
-        dcc.RadioItems(id='disable_dropdown',options=[
-            {'label':'Choose period','value':'period'},
-            {'label':'Choose date','value':'stock_date'},
 
-
-        ],value='period',inputStyle={'margin-bottom':'20px'})]),
+        html.Label('Choose period'),
         html.Div(className='div-for-periods',children=[
         dcc.Dropdown(id='period_dropdown',options=[
             {'label':'1m','value':1},
@@ -141,24 +136,9 @@ sidebar = [
             {'label':'5y','value':60},
             {'label':'10y','value':120},
             {'label':'20y', 'value': 240}
-        ],value=1,disabled=True),
-        html.Div(children=[
-        dcc.DatePickerSingle(id="start_date",
-            min_date_allowed=min_date(),
-            max_date_allowed=max_date(),
-            initial_visible_month=min_date(),
-            date=min_date(),
-            disabled=True
-        )],style={'display':'inline-block'}),
-        html.Div(children=[
-        dcc.DatePickerSingle(id="end_date",
-            min_date_allowed=min_date(),
-            max_date_allowed=max_date(),
-            initial_visible_month=max_date(),
-            date=max_date(),
-            disabled=True
-        )],style={'display':'inline-block'}),
-        ]),
+        ],value=1),
+
+        ], style={'width':'100px','display':'inline-block'}),
         html.Div(id='additional_options',children=[
             html.Label("Choose chart type"),
             dcc.Dropdown(id='chart_type_dropdown',options=[

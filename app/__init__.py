@@ -28,7 +28,7 @@ def create_app():
 
 def register_dashapps(server):
     from app.dashapp_charts.layout import layout
-    from app.dashapp_charts.callbacks_store import register_callbacks
+    from app.dashapp_charts.callbacks import register_callbacks
 
 
 
