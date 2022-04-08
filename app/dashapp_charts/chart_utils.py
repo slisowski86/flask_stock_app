@@ -25,6 +25,8 @@ engine = create_engine(BaseConfig.SQLALCHEMY_DATABASE_URI)
 Session = sessionmaker(bind=engine)
 session = Session()
 
+
+
 def datetime_range(start=None, end=None):
     span = end - start
     for i in range(span.days + 1):
@@ -73,6 +75,7 @@ def make_subplot_candle(df, company, interval):
 
 
 
+
     return figure
 
 
@@ -93,7 +96,7 @@ def make_subplot_line(df, company, interval):
     figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
     return figure
 
-def make_figure_for_indicator(df,company,interval,indicator):
+def make_figure_for_indicator_candle(df,company,interval,indicator):
     figure = make_subplots(rows=3, cols=1, shared_xaxes=True,
                            vertical_spacing=0.042,
                            subplot_titles=(str(company) + ' ' + interval, 'Volume', indicator),
@@ -105,20 +108,55 @@ def make_figure_for_indicator(df,company,interval,indicator):
         open=df['Open'],
         high=df['High'],
         low=df['Low'],
-        close=df['Close']
+        close=df['Close'],
+        name=company
 
     ))
 
     figure.add_trace(go.Bar(x=df['Date'], y=df['Volume'], showlegend=False), row=2,
                      col=1)
+    figure.update_xaxes(range=update_xaxes_range(df, 'Date'))
+    figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
+    return figure
+
+def make_figure_for_indicator_line(df,company,interval,indicator):
+    figure = make_subplots(rows=3, cols=1, shared_xaxes=True,
+                           vertical_spacing=0.042,
+                           subplot_titles=(str(company) + ' ' + interval, 'Volume', indicator),
+                           row_width=[0.17,0.17, 0.58])
+    figure.update_layout(height=900)
+    figure.add_trace(go.Scatter(
+        x=df['Date'],
+        y=df['Close']
+
+    ))
+    figure.add_trace(go.Bar(x=df['Date'], y=df['Volume'], showlegend=False), row=2,
+                     col=1)
+    figure.update_xaxes(range=update_xaxes_range(df, 'Date'))
+    figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
     return figure
 
 def make_subplot_candle_indicator(df, company, interval,indicator):
     indicators_dict = {'macd': macd_figure,
                        'rsi': rsi_figure,
-                        'adx': adx_figure}
+                       'adx': adx_figure,
+                       'bop': bop_figure}
 
-    figure = make_figure_for_indicator(df,company,interval,indicator)
+    figure = make_figure_for_indicator_candle(df,company,interval,indicator)
+
+
+    indicators_dict[indicator](figure,df,indicator)
+
+
+
+    return figure
+
+def make_subplot_line_indicator(df, company, interval,indicator):
+    indicators_dict = {'macd': macd_figure,
+                       'rsi': rsi_figure,
+                       'adx': adx_figure,
+                       'bop': bop_figure}
+    figure = make_figure_for_indicator_line(df,company,interval,indicator)
 
 
     indicators_dict[indicator](figure,df,indicator)
@@ -128,13 +166,18 @@ def make_subplot_candle_indicator(df, company, interval,indicator):
 
     return figure
 
-def macd_figure(figure,df,indicator):
-    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator]), row=3, col=1)
-    figure.add_trace(go.Scatter(x=df['Date'], y=df['macd_sig']), row=3, col=1)
-    figure.add_trace(go.Bar(x=df['Date'], y=df['macd_hist']), row=3, col=1)
-def rsi_figure(figure,df,indicator):
-    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator]), row=3, col=1)
-    figure.add_hline(y=70, line_dash="dot", row=3, col="all")
-def adx_figure(figure,df,indicator):
-    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator]), row=3, col=1)
 
+def macd_figure(figure,df,indicator):
+    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator], name=indicator), row=3, col=1)
+    figure.add_trace(go.Scatter(x=df['Date'], y=df['macd_sig'], name='macd_signal'), row=3, col=1)
+    figure.add_trace(go.Bar(x=df['Date'], y=df['macd_hist'], name='macd_hsitogram'),row=3, col=1)
+def rsi_figure(figure,df,indicator):
+    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator], name=indicator), row=3, col=1)
+    figure.add_hline(y=70, line_dash="dot", row=3, col="all", annotation_text="RSI 70", annotation_position='right')
+def adx_figure(figure,df,indicator):
+    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator], name=indicator), row=3, col=1)
+    figure.add_hline(y=25, line_dash="dot", row=3, col="all", annotation_text="ADX 25", annotation_position='right')
+def bop_figure(figure,df,indicator):
+    figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator], name=indicator), row=3, col=1)
+    figure.add_hline(y=0.40, line_dash="dot", row=3, col="all", annotation_text="BOP 0.40", annotation_position='right')
+    figure.add_hline(y=-0.40, line_dash="dot", row=3, col="all", annotation_text="BOP -0.40", annotation_position='right')

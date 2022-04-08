@@ -87,7 +87,8 @@ def register_callbacks(dashapp):
         start_date_period = company_max_date(company) - relativedelta(months=period_value)
         indicators_dict = {'macd': macd_all,
                            'rsi': rsi,
-                           'adx': adx}
+                           'adx': adx,
+                           'bop':bop}
 
         interval=''
         #max_date_dt = datetime.strptime(end_date, '%Y-%m-%d')
@@ -100,7 +101,8 @@ def register_callbacks(dashapp):
         if indicator is not None:
             indicators_period = {'macd': 33,
                                  'rsi': 14,
-                                 'adx':27}
+                                 'adx':27,
+                                 'bop':0}
             indicators_period_value = 0
 
             if period_value > 12 and period_value <= 60:
@@ -145,7 +147,8 @@ def register_callbacks(dashapp):
             indicators_args={
                 'macd':[price_df['Close']],
                 'rsi':[price_df['Close']],
-                'adx':[price_df['High'],price_df['Low'],price_df['Close']]
+                'adx':[price_df['High'],price_df['Low'],price_df['Close']],
+                'bop':[price_df['Open'],price_df['High'],price_df['Low'],price_df['Close']]
             }
             if indicator=='macd':
                 price_df[indicator] = indicators_dict[indicator](price_df['Close'])[0]
@@ -220,6 +223,8 @@ def register_callbacks(dashapp):
         else:
 
             figure = make_subplot_line(price_df,company,interval)
+            if indicator is not None:
+                figure=make_subplot_line_indicator(price_df,company, interval, indicator)
 
         if period_value <= 12:
             figure.update_xaxes(rangebreaks=[dict(values=diff_dates(price_df, 'Date'))])

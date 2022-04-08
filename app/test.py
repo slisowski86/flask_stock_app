@@ -2,6 +2,7 @@ import json
 
 import datetime as datetime
 import psycopg2
+from IPython.core.display_functions import display
 from talib import ADX, MACD
 
 import app
@@ -89,5 +90,35 @@ indicators_args={
             }
 
 print(len(indicators_args['adx']))
-adx_v=indicators_dict['rsi'](price_df['Close'])
+adx_v=ta.BOP(price_df['Open'],price_df['High'],price_df['Low'],price_df['Close'])
 print(adx_v)
+
+import plotly.express as px
+import plotly.graph_objs as go
+import ipywidgets as widgets
+
+iris = px.data.iris()
+iris['index_new'] = iris.index
+p = px.scatter(iris, x="sepal_width", y="sepal_length", color="species", hover_name='index_new')
+
+def hover_fn(trace, points, state):
+    if points.point_inds:
+        ind = points.point_inds[0]
+        hover_data.value = 'hover_df_index: \n {:d}'.format(int(trace.hovertext[ind]))
+        inds =  trace.hovertext[ind]
+        display(iris[inds])
+
+hover_data = widgets.Label()
+
+fig  = go.FigureWidget(p)
+
+for f in fig.data:
+    f.on_hover(hover_fn)
+
+display(fig,hover_data)
+
+string_j='{ "points": [ { "curveNumber": 0, "pointNumber": 4, "pointIndex": 4, "x": "2022-03-11", "open": 265, "high": 291.5, "low": 260.8, "close": 290.3, "bbox": { "x0": 260.25, "x1": 281.68, "y0": 469.04, "y1": 469.04 } } ] }'
+
+res=json.loads(string_j)
+print(type(res))
+print(type(res['points'][0]['pointIndex']))

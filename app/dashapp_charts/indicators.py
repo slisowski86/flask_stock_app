@@ -35,4 +35,5 @@ def rsi(close_price):
 
 def adx(high, low, close):
     return  ta.ADX(high, low, close, timeperiod=14)
-
+def bop(open, high, low, close):
+    return ta.BOP(open, high, low, close)

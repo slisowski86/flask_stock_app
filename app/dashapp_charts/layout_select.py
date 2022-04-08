@@ -108,6 +108,7 @@ meta = [
             # data is a list of dicts describing shapes
             dcc.Store(id="price_df"),
             dcc.Store(id="interval"),
+            dcc.Store(id='click-data')
 
 
         ],
@@ -157,7 +158,8 @@ sidebar = [
 
 
 
-        ],style={'padding-top':'30px','width':'40%'})
+        ],style={'padding-top':'30px','width':'40%'}),
+            html.Div(id='fib-data', children=[])
 
 
                 ])])]
@@ -181,12 +183,10 @@ chart = [
                                                        "modeBarButtonsToAdd": [
                                                            "drawrect",
                                                            "drawline",
-                                                           "select",
+                                                           "drawopenpath",
                                                            "eraseshape",
                                                        ],
-                                                       "modeBarButtonsToRemove":[
-                                                           "resetScale"
-                                                       ],
+
                                                        'displaylogo':False
                                                    },
                                                    )
