@@ -17,13 +17,21 @@ from sqlalchemy import func
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine, select, func, text
 from sqlalchemy.orm import sessionmaker
-from models  import Stock_price
+#from models import Stock_price
 import talib as ta
+
 from config import BaseConfig
 from dashapp_charts.indicators import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import talib as ta
+from dashapp_charts.chart_utils import *
+
+def update_xaxes_range(df, col_date):
+    df[col_date] = pd.to_datetime(df[col_date])
+    delta_days = (max(df[col_date]) - min(df[col_date])).days
+    xaxis_end_date = max(df[col_date]) + timedelta(delta_days / 20)
+    return [str(min(df[col_date])), str(xaxis_end_date)]
 engine=create_engine(BaseConfig.SQLALCHEMY_DATABASE_URI)
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -39,7 +47,7 @@ price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume
 price_df_rsi = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
 
 
-
+interval='day'
 result = session.query(Stock_price.trade_date, Stock_price.open,
                                                             Stock_price.high, Stock_price.low, Stock_price.close,
                                                             Stock_price.volume).filter(
@@ -79,8 +87,8 @@ indicators_dict = {'macd': macd_all,
                            'rsi': rsi,
                             'adx':adx}
 
-price_df['MACD']=indicators_dict['macd'](price_df['Close'])[0]
-price_df['MACD_sig']=indicators_dict['macd'](price_df['Close'])[1]
+price_df['macd']=indicators_dict['macd'](price_df['Close'])[0]
+price_df['macd_sig']=indicators_dict['macd'](price_df['Close'])[1]
 price_df['macd_hist']=indicators_dict['macd'](price_df['Close'])[2]
 
 indicators_args={
@@ -93,32 +101,24 @@ print(len(indicators_args['adx']))
 adx_v=ta.BOP(price_df['Open'],price_df['High'],price_df['Low'],price_df['Close'])
 print(adx_v)
 
-import plotly.express as px
-import plotly.graph_objs as go
-import ipywidgets as widgets
+figure = make_subplots(rows=3, cols=1, shared_xaxes=True,
+                           vertical_spacing=0.042,
+                           subplot_titles=(str(company) + ' ' + interval, 'Volume'),
+                           row_width=[0.17,0.17, 0.58])
+figure.update_layout(height=900)
+figure.add_trace(go.Scatter(
+    x=price_df['Date'],
+    y=price_df['Close']
 
-iris = px.data.iris()
-iris['index_new'] = iris.index
-p = px.scatter(iris, x="sepal_width", y="sepal_length", color="species", hover_name='index_new')
+))
+figure.add_trace(go.Bar(x=price_df['Date'], y=price_df['Volume'], showlegend=False), row=2,
+                 col=1)
+figure.update_xaxes(range=update_xaxes_range(price_df, 'Date'))
+figure.update_layout(xaxis_rangeslider_visible=False)
 
-def hover_fn(trace, points, state):
-    if points.point_inds:
-        ind = points.point_inds[0]
-        hover_data.value = 'hover_df_index: \n {:d}'.format(int(trace.hovertext[ind]))
-        inds =  trace.hovertext[ind]
-        display(iris[inds])
 
-hover_data = widgets.Label()
 
-fig  = go.FigureWidget(p)
 
-for f in fig.data:
-    f.on_hover(hover_fn)
 
-display(fig,hover_data)
-
-string_j='{ "points": [ { "curveNumber": 0, "pointNumber": 4, "pointIndex": 4, "x": "2022-03-11", "open": 265, "high": 291.5, "low": 260.8, "close": 290.3, "bbox": { "x0": 260.25, "x1": 281.68, "y0": 469.04, "y1": 469.04 } } ] }'
-
-res=json.loads(string_j)
-print(type(res))
-print(type(res['points'][0]['pointIndex']))
+macd_figure(figure,price_df,'macd')
+figure.show()

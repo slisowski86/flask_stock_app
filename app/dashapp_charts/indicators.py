@@ -2,7 +2,9 @@ import pandas as pd
 import talib as ta
 import plotly.graph_objects as go
 
-def macd(close_price):
+
+
+def macd_line(close_price):
     exp1 = close_price.ewm(span=12, adjust=False).mean()
     exp2 = close_price.ewm(span=26, adjust=False).mean()
     macd = exp1 - exp2
@@ -10,7 +12,7 @@ def macd(close_price):
 
     return macd
 
-def macd_signal(close_price):
+def macd_signal_line(close_price):
     exp1 = close_price.ewm(span=12, adjust=False).mean()
     exp2 = close_price.ewm(span=26, adjust=False).mean()
     macd = exp1 - exp2
@@ -23,11 +25,11 @@ def macd_signal(close_price):
 
 def macd_all(close_price):
 
-    macd_f=macd(close_price)
-    macd_s=macd_signal(close_price)
-    macd_hist=macd_f-macd_s
+    macd=macd_line(close_price)
+    macd_signal=macd_signal_line(close_price)
+    macd_hist=macd-macd_signal
 
-    return macd_f, macd_s, macd_hist
+    return macd, macd_signal, macd_hist
 
 def rsi(close_price):
 

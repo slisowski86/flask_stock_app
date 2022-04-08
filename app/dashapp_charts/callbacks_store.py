@@ -22,7 +22,9 @@ from dash.exceptions import PreventUpdate
 from ..extensions import db
 
 def register_callbacks(dashapp):
-    n_clicks = []
+
+
+
     def diff_dates(df, col_date):
         date_list_all = list(datetime_range(min(df[col_date]), max(df[col_date])))
         diff_date = set(date_list_all) - set(df[col_date])
@@ -88,7 +90,7 @@ def register_callbacks(dashapp):
     def make_price_df(company, indicator, period_value):
         price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
         start_date_period = company_max_date(company) - relativedelta(months=period_value)
-        indicators_dict = {'macd': macd_all,
+        indicators_dict= {'macd': macd_all,
                            'rsi': rsi,
                            'adx': adx,
                            'bop':bop}
@@ -199,14 +201,18 @@ def register_callbacks(dashapp):
                           Input('indicators','value'),
                           Input('interval','value'),
                           Input('stock_dropdown', 'value'),
-                          Input('stock_graph', 'clickData'),
 
                           Input('chart_type_dropdown', 'value'),
                         Input('period_dropdown', 'value')],
                       State('stock_graph', 'figure'))
-    def update_figure(price_df, indicator, interval_df,company,clickedData,
+    def update_figure(price_df, indicator, interval_df,company,
                       chart_type,
                       period_value, figure):
+        indicators_dict = {'macd': macd_figure,
+                           'rsi': rsi_figure,
+                           'adx': adx_figure,
+                           'bop': bop_figure}
+
         price_df = pd.read_json(price_df, orient='split')
         interval=interval_df
 
@@ -221,31 +227,10 @@ def register_callbacks(dashapp):
 
             figure=make_subplot_candle(price_df,company,interval)
 
-            fib_line=0
-            fib_line2=0
-            if clickedData is not None and len(n_clicks)==0:
-
-                c_data = json.dumps(clickedData, indent=2)
-                fib = json.loads(c_data)
-                fib_line = fib['points'][0]['high']
-                figure.add_hline(y=fib_line, line_dash="dot", row=1, col="all", annotation_text="RSI 70",
-                             annotation_position='right')
-                n_clicks.append(fib_line)
-            elif clickedData is not None and len(n_clicks)==1:
-                c_data = json.dumps(clickedData, indent=2)
-                fib = json.loads(c_data)
-                fib_line = n_clicks[0]
-                fib_line_2= fib['points'][0]['low']
-                figure.add_hline(y=fib_line, line_dash="dot", row=1, col="all", annotation_text="RSI 70",
-                                 annotation_position='right')
-                figure.add_hline(y=fib_line_2, line_dash="dot", row=1, col="all", annotation_text="RSI 70",
-                                 annotation_position='right')
-
-
-                print(n_clicks)
 
             if indicator is not None:
-                figure=make_subplot_candle_indicator(price_df,company,interval,indicator)
+                indicators_dict[indicator](figure,price_df,indicator)
+
 
 
 
@@ -253,7 +238,7 @@ def register_callbacks(dashapp):
 
             figure = make_subplot_line(price_df,company,interval)
             if indicator is not None:
-                figure=make_subplot_line_indicator(price_df,company, interval, indicator)
+                indicators_dict[indicator](figure, price_df, indicator)
 
         if period_value <= 12:
             figure.update_xaxes(rangebreaks=[dict(values=diff_dates(price_df, 'Date'))])

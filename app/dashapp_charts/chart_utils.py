@@ -14,7 +14,7 @@ from datetime import timedelta, datetime
 from sqlalchemy import func
 from dateutil.relativedelta import relativedelta
 import plotly.graph_objects as go
-from ..models import Stock_price
+from app.models import Stock_price
 from dash.exceptions import PreventUpdate
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -53,55 +53,10 @@ def make_subplot_candle(df, company, interval):
 
 
 
-    figure = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                           vertical_spacing=0.05,
-                           subplot_titles=(str(company) + ' ' + interval, 'Volume',),
-                           row_width=[0.2, 0.7])
-    figure.update_layout(height=750)
-    figure.add_trace(go.Candlestick(
-        x=df['Date'],
-        open=df['Open'],
-        high=df['High'],
-        low=df['Low'],
-        close=df['Close']
-
-    ))
-
-    figure.add_trace(go.Bar(x=df['Date'], y=df['Volume'], showlegend=False), row=2,
-                     col=1)
-
-    figure.update_xaxes(range=update_xaxes_range(df, 'Date'))
-    figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
-
-
-
-
-    return figure
-
-
-def make_subplot_line(df, company, interval):
-    figure = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                           vertical_spacing=0.05,
-                           subplot_titles=(str(company) + ' ' + interval, 'Volume'),
-                           row_width=[0.2, 0.7])
-    figure.update_layout(height=750)
-    figure.add_trace(go.Scatter(
-        x=df['Date'],
-        y=df['Close']
-
-    ))
-    figure.add_trace(go.Bar(x=df['Date'], y=df['Volume'], showlegend=False), row=2,
-                     col=1)
-    figure.update_xaxes(range=update_xaxes_range(df, 'Date'))
-    figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
-    return figure
-
-def make_figure_for_indicator_candle(df,company,interval,indicator):
     figure = make_subplots(rows=3, cols=1, shared_xaxes=True,
                            vertical_spacing=0.042,
-                           subplot_titles=(str(company) + ' ' + interval, 'Volume', indicator),
-                           row_width=[0.17, 0.17, 0.58])
-
+                           subplot_titles=(str(company) + ' ' + interval, 'Volume',),
+                           row_width=[0.17,0.17, 0.58])
     figure.update_layout(height=900)
     figure.add_trace(go.Candlestick(
         x=df['Date'],
@@ -113,58 +68,36 @@ def make_figure_for_indicator_candle(df,company,interval,indicator):
 
     ))
 
-    figure.add_trace(go.Bar(x=df['Date'], y=df['Volume'], showlegend=False), row=2,
+    figure.add_trace(go.Bar(x=df['Date'], y=df['Volume'], name='Volume'), row=2,
                      col=1)
+
     figure.update_xaxes(range=update_xaxes_range(df, 'Date'))
-    figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
+    figure.update_layout(xaxis_rangeslider_visible=False)
+
+
+
+
     return figure
 
-def make_figure_for_indicator_line(df,company,interval,indicator):
+
+def make_subplot_line(df, company, interval):
     figure = make_subplots(rows=3, cols=1, shared_xaxes=True,
                            vertical_spacing=0.042,
-                           subplot_titles=(str(company) + ' ' + interval, 'Volume', indicator),
+                           subplot_titles=(str(company) + ' ' + interval, 'Volume',),
                            row_width=[0.17,0.17, 0.58])
     figure.update_layout(height=900)
     figure.add_trace(go.Scatter(
         x=df['Date'],
-        y=df['Close']
+        y=df['Close'],
+        name=company
 
     ))
-    figure.add_trace(go.Bar(x=df['Date'], y=df['Volume'], showlegend=False), row=2,
+    figure.add_trace(go.Bar(x=df['Date'], y=df['Volume'], name='Volume'), row=2,
                      col=1)
     figure.update_xaxes(range=update_xaxes_range(df, 'Date'))
-    figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
+    figure.update_layout(xaxis_rangeslider_visible=False)
     return figure
 
-def make_subplot_candle_indicator(df, company, interval,indicator):
-    indicators_dict = {'macd': macd_figure,
-                       'rsi': rsi_figure,
-                       'adx': adx_figure,
-                       'bop': bop_figure}
-
-    figure = make_figure_for_indicator_candle(df,company,interval,indicator)
-
-
-    indicators_dict[indicator](figure,df,indicator)
-
-
-
-    return figure
-
-def make_subplot_line_indicator(df, company, interval,indicator):
-    indicators_dict = {'macd': macd_figure,
-                       'rsi': rsi_figure,
-                       'adx': adx_figure,
-                       'bop': bop_figure}
-    figure = make_figure_for_indicator_line(df,company,interval,indicator)
-
-
-    indicators_dict[indicator](figure,df,indicator)
-
-    figure.update_xaxes(range=update_xaxes_range(df, 'Date'))
-    figure.update_layout(title=str(company) + ' ' + interval, xaxis_rangeslider_visible=False)
-
-    return figure
 
 
 def macd_figure(figure,df,indicator):
