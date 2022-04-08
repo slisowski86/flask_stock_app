@@ -60,27 +60,6 @@ def register_callbacks(dashapp):
 
         return dfw
 
-    def period_resample_indicator(df, col_date, period,indicator):
-        df[col_date] = pd.to_datetime(df[col_date])
-        df.set_index(col_date, inplace=True)
-        df.sort_index(inplace=True)
-
-        logic = {'Open': 'first',
-                 'High': 'max',
-                 'Low': 'min',
-                 'Close': 'last',
-                 'Volume': 'sum',
-                 }
-
-        dfw = df.resample(period).apply(logic)
-
-        dfw = dfw.reset_index()
-
-        return dfw
-
-
-
-
     @dashapp.callback([Output('price_df', 'data'),
                        Output('interval','value')],
                         [Input('stock_dropdown', 'value'),
@@ -95,20 +74,12 @@ def register_callbacks(dashapp):
                            'adx': adx,
                            'bop':bop}
 
-        interval=''
-        #max_date_dt = datetime.strptime(end_date, '%Y-%m-%d')
-        #min_date_dt = datetime.strptime(start_date, '%Y-%m-%d')
-
-
-
-
-
         if indicator is not None:
             indicators_period = {'macd': 33,
                                  'rsi': 14,
                                  'adx':27,
                                  'bop':0}
-            indicators_period_value = 0
+
 
             if period_value > 12 and period_value <= 60:
                 indicators_period_value = indicators_period[indicator] * 7
