@@ -20,7 +20,8 @@ from ..models import Stock_price
 from .indicators import *
 from dash.exceptions import PreventUpdate
 from ..extensions import db
-
+from .functions_dict import func_dict
+from talib import *
 def register_callbacks(dashapp):
 
 
@@ -63,33 +64,33 @@ def register_callbacks(dashapp):
     @dashapp.callback([Output('price_df', 'data'),
                        Output('interval','value')],
                         [Input('stock_dropdown', 'value'),
-                         Input('indicators','value'),
+                         Input('indicators_2','value'),
 
                        Input('period_dropdown', 'value')])
     def make_price_df(company, indicator, period_value):
         price_df = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
         start_date_period = company_max_date(company) - relativedelta(months=period_value)
-        indicators_dict= {'macd': macd_all,
-                           'rsi': rsi,
-                           'adx': adx,
-                           'bop':bop}
+
 
         if indicator is not None:
-            indicators_period = {'macd': 33,
-                                 'rsi': 14,
-                                 'adx':27,
-                                 'bop':0}
+            with open('func_dict.json') as json_file:
+                indicators_dict = json.load(json_file)
+            #indicators_period = {'macd': 33,
+                                 #'rsi': 14,
+                                 #'adx':27,
+                                 #'bop':0}
+            print(indicators_dict[indicator]['name'])
 
 
             if period_value > 12 and period_value <= 60:
-                indicators_period_value = indicators_period[indicator] * 7
+                indicators_period_value = indicators_dict[indicator]['period'] * 7
             elif period_value > 60:
-                indicators_period_value = indicators_period[indicator] * 31
+                indicators_period_value = indicators_dict[indicator]['period'] * 31
             else:
-                indicators_period_value = indicators_period[indicator]
+                indicators_period_value = indicators_dict[indicator]['period']
             indicator_start_id = session.execute(
                 "WITH CTE AS (SELECT id, trade_date FROM stock_price WHERE name=:company AND trade_date BETWEEN :start_date AND :end_date FETCH FIRST ROW ONLY ) SELECT id-:ind_period FROM CTE",
-                {'company': company, 'ind_period': indicators_period_value, 'start_date': start_date_period,
+                {'company': company, 'ind_period': int(indicators_period_value), 'start_date': start_date_period,
                  'end_date': company_max_date(company)}).all()
             back_date_id = indicator_start_id[0][0]
             if back_date_id <= 0:
@@ -120,20 +121,30 @@ def register_callbacks(dashapp):
             else:
                 interval = 'Day'
 
-            indicators_args={
-                'macd':[price_df['Close']],
-                'rsi':[price_df['Close']],
-                'adx':[price_df['High'],price_df['Low'],price_df['Close']],
-                'bop':[price_df['Open'],price_df['High'],price_df['Low'],price_df['Close']]
-            }
-            if indicator=='macd':
-                price_df[indicator] = indicators_dict[indicator](price_df['Close'])[0]
-                price_df['macd_sig']=indicators_dict[indicator](price_df['Close'])[1]
-                price_df['macd_hist'] = indicators_dict[indicator](price_df['Close'])[2]
-            else:
+            #indicators_args={
+                #'macd':[price_df['Close']],
+                #'rsi':[price_df['Close']],
+                #'adx':[price_df['High'],price_df['Low'],price_df['Close']],
+                #'bop':[price_df['Open'],price_df['High'],price_df['Low'],price_df['Close']]
+            #}
+            #if indicator=='macd':
+                #price_df[indicator] = indicators_dict[indicator](price_df['Close'])[0]
+                #price_df['macd_sig']=indicators_dict[indicator](price_df['Close'])[1]
+                #price_df['macd_hist'] = indicators_dict[indicator](price_df['Close'])[2]
+            #else:
 
-                price_df[indicator] = indicators_dict[indicator](*indicators_args[indicator])
-
+                #price_df[indicator] = indicators_dict[indicator](*indicators_args[indicator])
+            for value, i in zip(indicators_dict[indicator]['cols'], range(len(indicators_dict[indicator]['cols']))):
+                print(indicator)
+                cols_to_calc=[]
+                for dfcol in indicators_dict[indicator]['args']:
+                    col_to_calc=price_df[str(dfcol).capitalize()]
+                    cols_to_calc.append(col_to_calc)
+                for j in indicators_dict[indicator]['cols']:
+                    if len(indicators_dict[indicator]['cols']) == 1:
+                        price_df[str(value).upper()] = globals()[indicators_dict[indicator]['name']](*cols_to_calc)
+                    else:
+                        price_df[str(value).upper()] = globals()[indicators_dict[indicator]['name']](*cols_to_calc)[i]
             price_df['Date'] = pd.to_datetime(price_df['Date'])
             price_df = price_df[price_df['Date'] >= datetime.strptime(str(start_date_period), '%Y-%m-%d')]
             print(price_df.head())
@@ -160,7 +171,7 @@ def register_callbacks(dashapp):
             else:
                 interval = 'Day'
 
-        print(price_df.head())
+
         return price_df.to_json(date_format='iso', orient='split'), interval
 
 
@@ -169,7 +180,7 @@ def register_callbacks(dashapp):
     @dashapp.callback(Output('stock_graph', 'figure'),
                       [
                           Input('price_df', 'data'),
-                          Input('indicators','value'),
+                          Input('indicators_2','value'),
                           Input('interval','value'),
                           Input('stock_dropdown', 'value'),
 
@@ -179,10 +190,10 @@ def register_callbacks(dashapp):
     def update_figure(price_df, indicator, interval_df,company,
                       chart_type,
                       period_value, figure):
-        indicators_dict = {'macd': macd_figure,
-                           'rsi': rsi_figure,
-                           'adx': adx_figure,
-                           'bop': bop_figure}
+        indicators_dict_fig = {'MACD': macd_figure,
+                           'RSI': rsi_figure,
+                           'ADX': adx_figure,
+                           'BOP': bop_figure}
 
         price_df = pd.read_json(price_df, orient='split')
         interval=interval_df
@@ -200,7 +211,8 @@ def register_callbacks(dashapp):
 
 
             if indicator is not None:
-                indicators_dict[indicator](figure,price_df,indicator)
+                make_figure(figure,price_df,indicator)
+
 
 
 
@@ -209,7 +221,7 @@ def register_callbacks(dashapp):
 
             figure = make_subplot_line(price_df,company,interval)
             if indicator is not None:
-                indicators_dict[indicator](figure, price_df, indicator)
+                make_figure(figure, price_df, indicator)
 
         if period_value <= 12:
             figure.update_xaxes(rangebreaks=[dict(values=diff_dates(price_df, 'Date'))])

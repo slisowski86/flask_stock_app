@@ -102,8 +102,8 @@ def make_subplot_line(df, company, interval):
 
 def macd_figure(figure,df,indicator):
     figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator], name=indicator), row=3, col=1)
-    figure.add_trace(go.Scatter(x=df['Date'], y=df['macd_sig'], name='macd_signal'), row=3, col=1)
-    figure.add_trace(go.Bar(x=df['Date'], y=df['macd_hist'], name='macd_hsitogram'),row=3, col=1)
+    figure.add_trace(go.Scatter(x=df['Date'], y=df[str(indicator)+'SIGNAL'], name='macd_signal'), row=3, col=1)
+    figure.add_trace(go.Bar(x=df['Date'], y=df[str(indicator)+'HIST'], name='macd_hsitogram'),row=3, col=1)
 def rsi_figure(figure,df,indicator):
     figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator], name=indicator), row=3, col=1)
     figure.add_hline(y=70, line_dash="dot", row=3, col="all", annotation_text="RSI 70", annotation_position='right')
@@ -114,3 +114,13 @@ def bop_figure(figure,df,indicator):
     figure.add_trace(go.Scatter(x=df['Date'], y=df[indicator], name=indicator), row=3, col=1)
     figure.add_hline(y=0.40, line_dash="dot", row=3, col="all", annotation_text="BOP 0.40", annotation_position='right')
     figure.add_hline(y=-0.40, line_dash="dot", row=3, col="all", annotation_text="BOP -0.40", annotation_position='right')
+
+
+def make_figure(figure,df,indicator):
+    indicators_df=df.copy()
+    indicators_df.drop(df.loc[:, 'Open':'Volume'], inplace=True, axis=1)
+    for col in indicators_df.loc[:,indicators_df.columns!='Date']:
+        figure.add_trace(go.Scatter(x=indicators_df['Date'], y=indicators_df[col], name=indicator), row=3, col=1)
+        if 'HIST' in str(col):
+            figure.add_trace(go.Bar(x=indicators_df['Date'], y=indicators_df[col], name=indicator), row=3, col=1)
+

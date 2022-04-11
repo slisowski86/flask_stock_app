@@ -19,7 +19,7 @@ from sqlalchemy import func
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine, select, func, text
 from sqlalchemy.orm import sessionmaker
-#from models import Stock_price
+from app.models import Stock_price
 from talib import *
 import urllib
 
@@ -28,7 +28,7 @@ from dashapp_charts.indicators import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import talib as ta
-from dashapp_charts.chart_utils import *
+#from dashapp_charts.chart_utils import *
 
 def update_xaxes_range(df, col_date):
     df[col_date] = pd.to_datetime(df[col_date])
@@ -123,7 +123,6 @@ figure.update_layout(xaxis_rangeslider_visible=False)
 
 
 
-macd_figure(figure,price_df,'macd')
 
 import requests
 import re
@@ -250,25 +249,39 @@ print(list(nan_count_dict.values()))
 nest_val=['name','cols','period','args']
 list_to_convert=list(map(list,zip(indicators,cols_df,args,list(nan_count_dict.values()))))
 from collections import defaultdict
-
+indicator='MACD'
 for i in range(len(indicators)):
     nest_dict=dict.fromkeys(nest_val)
     nest_dict['name']=list_to_convert[i][0]
     nest_dict['cols'] = list_to_convert[i][1]
-    nest_dict['period'] = list_to_convert[i][2]
-    nest_dict['args'] = list_to_convert[i][3]
+    nest_dict['args'] = list_to_convert[i][2]
+    nest_dict['period'] = list_to_convert[i][3]
     func_dict[indicators[i]]=nest_dict
 
-print(func_dict)
+print([key for key in func_dict.keys()])
 
+for value in func_dict['MACD']['cols']:
+    print(value)
 
-
-
-
-
-
-
-
+price_df.drop(price_df.iloc[:,6:], inplace=True, axis=1)
+indicators_dict=func_dict
+print(indicators_dict)
+for value, i in zip(indicators_dict[indicator]['cols'], range(len(indicators_dict[indicator]['cols']))):
+    cols_to_calc = []
+    for dfcol in indicators_dict[indicator]['args']:
+        col_to_calc = price_df[str(dfcol).capitalize()]
+        cols_to_calc.append(col_to_calc)
+    print(cols_to_calc)
+    for j in indicators_dict[indicator]['cols']:
+        if len(indicators_dict[indicator]['cols'])==1:
+            price_df[value] = locals()[indicator](*cols_to_calc)
+        else:
+            price_df[value] = locals()[indicator](*cols_to_calc)[i]
+indicators_df_test=price_df.drop(price_df.loc[:,:'Volume'], inplace=True, axis=1)
+print(indicators_df_test)
+print(price_df.head(100))
+for cols in price_df.loc[:,price_df.columns!='macd']:
+    print(cols)
 
 
 def get_df_name(df):

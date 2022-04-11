@@ -10,6 +10,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from .functions_dict import func_dict
 
 
 
@@ -36,6 +37,9 @@ def max_date():
     max_date=session.query(func.max(Stock_price.trade_date)).first()
     max_date=max_date[0]
     return max_date
+def indicators_list():
+    return [key for key in func_dict.keys()]
+
 
 
 
@@ -148,21 +152,13 @@ sidebar = [
                 {'label':'candlestick','value':'candle'}
             ], value='candle'),
             html.Label('Choose indicator'),
-        dcc.Dropdown(id='indicators',options=[
-                {'label':'MACD','value':'macd'},
-                {'label':'RSI','value':'rsi'},
-            {'label':'ADX','value':'adx'},
-            {'label':'BOP','value':'bop'}
-
-            ])
+        dcc.Dropdown(indicators_list(), id='indicators_2'),
 
 
 
         ],style={'padding-top':'30px','width':'40%'}),
-            html.Div(id='fib-data', children=[])
-
-
-                ])])]
+            html.Div(id='fib-data', children=[]),
+            ])])]
 
 chart = [
     dbc.Card(

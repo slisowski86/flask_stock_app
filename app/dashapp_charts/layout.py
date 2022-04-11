@@ -10,6 +10,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from .functions_dict import func_dict
 
 
 
@@ -153,7 +154,8 @@ sidebar = [
             {'label':'ADX','value':'adx'},
             {'label':'BOP','value':'bop'}
 
-            ])
+            ]),
+
 
 
 
