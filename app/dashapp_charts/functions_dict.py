@@ -19,16 +19,16 @@ from sqlalchemy import func
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine, select, func, text
 from sqlalchemy.orm import sessionmaker
-#from models import Stock_price
+from app.models import Stock_price
 from talib import *
 import urllib
 
 from config import BaseConfig
-from dashapp_charts.indicators import *
+
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import talib as ta
-from dashapp_charts.chart_utils import *
+
 
 def update_xaxes_range(df, col_date):
     df[col_date] = pd.to_datetime(df[col_date])
@@ -86,13 +86,8 @@ for column, i in zip(price_df_rsi.columns, range(len(result_for_rsi))):
     price_df_rsi[column] = [x[i] for x in result_for_rsi]
 
 
-indicators_dict = {'macd': macd_all,
-                           'rsi': rsi,
-                            'adx':adx}
 
-price_df['macd']=indicators_dict['macd'](price_df['Close'])[0]
-price_df['macd_sig']=indicators_dict['macd'](price_df['Close'])[1]
-price_df['macd_hist']=indicators_dict['macd'](price_df['Close'])[2]
+
 
 indicators_args={
                 'macd':[price_df['Close']],
@@ -120,10 +115,6 @@ figure.update_xaxes(range=update_xaxes_range(price_df, 'Date'))
 figure.update_layout(xaxis_rangeslider_visible=False)
 
 
-
-
-
-macd_figure(figure,price_df,'macd')
 
 import requests
 import re
@@ -204,30 +195,18 @@ for dict in list_of_dicts:
 
     to_calc_all.append(to_calc)
 
-#for i in range(len(to_calc_all)):
-
-    #for j in range(len(to_calc_all[i])):
-        #print(str(len(to_calc_all[i])) + '-' + str(len(args[i]))+'-'+str(len(to_calc_all[i][j])))
-
-
-
-
 indicators_df=price_df.copy()
 indicators_df.drop(indicators_df.iloc[:,0:9],inplace=True, axis=1)
-print(indicators_df.info())
 nan_count_dict={}
 for col in indicators_df.columns:
     nan_count=indicators_df[col].isna().sum()
     f=str(col).split('-')[0]
-    print(f)
+
     if f in indicators:
 
         nan_count_dict[f]=nan_count
 
-print(indicators)
-print(cols)
-print(args)
-print(nan_count_dict)
+
 #print(len(list_of_dicts[2]['arg']))
 cols_df=[]
 for i in range(len(cols)):
@@ -240,16 +219,12 @@ for i in range(len(cols)):
             col_to_add.append(cols[i][j])
     cols_df.append(col_to_add)
 
-print(cols_df)
-print(len(indicators))
-print(len(cols))
-print(len(args))
+
 func_dict=dict.fromkeys(indicators)
-print(func_dict)
-print(list(nan_count_dict.values()))
+
 nest_val=['name','cols','period','args']
 list_to_convert=list(map(list,zip(indicators,cols_df,args,list(nan_count_dict.values()))))
-from collections import defaultdict
+
 
 for i in range(len(indicators)):
     nest_dict=dict.fromkeys(nest_val)
@@ -259,18 +234,5 @@ for i in range(len(indicators)):
     nest_dict['args'] = list_to_convert[i][3]
     func_dict[indicators[i]]=nest_dict
 
-print(func_dict)
 
 
-
-
-
-
-
-
-
-
-
-def get_df_name(df):
-    name =[x for x in globals() if globals()[x] is df][0]
-    return name
