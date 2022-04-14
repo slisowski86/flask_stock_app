@@ -1,4 +1,5 @@
-from dash import dcc, html, Dash, dash
+from dash import dcc, html, Dash, dash, dash_table
+import json
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -10,7 +11,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from .functions_dict import func_dict
+#from .functions_dict import func_dict
 
 
 
@@ -37,6 +38,12 @@ def max_date():
     max_date=session.query(func.max(Stock_price.trade_date)).first()
     max_date=max_date[0]
     return max_date
+def indicators_list():
+    with open('func_dict.json') as json_file:
+        indicators_dict = json.load(json_file)
+
+    return [key for key in indicators_dict.keys()]
+
 
 
 
@@ -109,12 +116,13 @@ meta = [
             # data is a list of dicts describing shapes
             dcc.Store(id="price_df"),
             dcc.Store(id="interval"),
+            dcc.Store(id='click-data')
 
 
         ],
     )
 ]
-
+points_df = pd.DataFrame(columns=['clicks', 'y_low', 'y_high','x'])
 sidebar = [
     dbc.Card(
         id="sidebar-card",
@@ -148,21 +156,38 @@ sidebar = [
                 {'label':'candlestick','value':'candle'}
             ], value='candle'),
             html.Label('Choose indicator'),
-        dcc.Dropdown(id='indicators',options=[
-                {'label':'MACD','value':'macd'},
-                {'label':'RSI','value':'rsi'},
-            {'label':'ADX','value':'adx'},
-            {'label':'BOP','value':'bop'}
+        dcc.Dropdown(indicators_list(), id='indicators_2'),
+
+
+
+        ],style={'padding-top':'30px','width':'40%'}),
+            html.Div(id='fib-data', children=[
 
             ]),
 
+            html.Div(id='count-data', children=[
+                    dash_table.DataTable(
+                        id='memory-table',
+                        columns=[{
+                            'name': i,
+                            'id': i,
+                            'deletable': True,
+                            'renamable': True
+                        } for i in points_df.columns],
+                        data=[
+                        ],
+                        editable=True,
+                        row_deletable=True
 
+                    )]),
+            html.Div(id='fibo_div', children=[
+            html.Label('Additional options'),
+            dcc.Dropdown(id='fibo_dropdown', multi=True, options=[
+       {'label': 'Fibonacci retracements', 'value': 'fibo_retr'},
+       {'label': 'Fibonacci time zones', 'value': 'fibo_time'}
 
-
-        ],style={'padding-top':'30px','width':'40%'})
-
-
-                ])])]
+   ])])
+            ])])]
 
 chart = [
     dbc.Card(
@@ -177,21 +202,19 @@ chart = [
                             dcc.Loading(
                                 id="chart-loading",
                                 type="default",
-                                children=dcc.Graph(id='stock_graph',
+                                children=[html.Div([dcc.Graph(id='stock_graph',
 
                                                    config={
                                                        "modeBarButtonsToAdd": [
                                                            "drawrect",
                                                            "drawline",
-                                                           "select",
+                                                           "drawopenpath",
                                                            "eraseshape",
                                                        ],
-                                                       "modeBarButtonsToRemove":[
-                                                           "resetScale"
-                                                       ],
+
                                                        'displaylogo':False
                                                    },
-                                                   )
+                                                   )], id='graph-div', n_clicks=0)]
                             )
                         ]
                     )

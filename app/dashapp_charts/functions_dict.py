@@ -1,34 +1,16 @@
 import json
-
-import datetime as datetime
+import re
+from datetime import timedelta, datetime
 
 import bs4
-import psycopg2
-from IPython.core.display_functions import display
-from talib import ADX, MACD
-from bs4 import BeautifulSoup
-import app
-from config import BaseConfig
-from dash import dcc, html, Dash, dash
-import dash
-import plotly.express as px
 import pandas as pd
-from datetime import timedelta, datetime
-from sqlalchemy import func
-from dateutil.relativedelta import relativedelta
-from sqlalchemy import create_engine, select, func, text
-from sqlalchemy.orm import sessionmaker
-from app.models import Stock_price
-from talib import *
-import urllib
-from numpyencoder import NumpyEncoder
-
 import requests
-import re
+from numpyencoder import NumpyEncoder
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
+from app.models import Stock_price
 from config import BaseConfig
-
-
 
 engine=create_engine(BaseConfig.SQLALCHEMY_DATABASE_URI)
 Session = sessionmaker(bind=engine)
@@ -54,10 +36,6 @@ result = session.query(Stock_price.trade_date, Stock_price.open,
 for column, i in zip(price_df.columns, range(len(result))):
     price_df[column] = [x[i] for x in result]
 
-
-
-
-import regex
 URL = "https://mrjbq7.github.io/ta-lib/func_groups/momentum_indicators.html"
 page = requests.get(URL)
 indicators=[]
@@ -165,7 +143,6 @@ func_dict=dict.fromkeys(indicators)
 
 nest_val=['name','cols','period','args']
 list_to_convert=list(map(list,zip(indicators,cols_df,args,list(nan_count_dict.values()))))
-from collections import defaultdict
 
 for i in range(len(indicators)):
     nest_dict=dict.fromkeys(nest_val)

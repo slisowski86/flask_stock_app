@@ -183,17 +183,14 @@ def register_callbacks(dashapp):
                           Input('indicators_2','value'),
                           Input('interval','value'),
                           Input('stock_dropdown', 'value'),
+                        Input('chart_type_dropdown', 'value'),
+                        Input('period_dropdown', 'value'),
+                      ])
 
-                          Input('chart_type_dropdown', 'value'),
-                        Input('period_dropdown', 'value')],
-                      State('stock_graph', 'figure'))
     def update_figure(price_df, indicator, interval_df,company,
                       chart_type,
-                      period_value, figure):
-        indicators_dict_fig = {'MACD': macd_figure,
-                           'RSI': rsi_figure,
-                           'ADX': adx_figure,
-                           'BOP': bop_figure}
+                      period_value):
+
 
         price_df = pd.read_json(price_df, orient='split')
         interval=interval_df
@@ -211,7 +208,7 @@ def register_callbacks(dashapp):
 
 
             if indicator is not None:
-                make_figure(figure,price_df,indicator)
+                make_figure(figure,price_df)
 
 
 
@@ -221,7 +218,7 @@ def register_callbacks(dashapp):
 
             figure = make_subplot_line(price_df,company,interval)
             if indicator is not None:
-                make_figure(figure, price_df, indicator)
+                make_figure(figure, price_df)
 
         if period_value <= 12:
             figure.update_xaxes(rangebreaks=[dict(values=diff_dates(price_df, 'Date'))])
@@ -231,6 +228,7 @@ def register_callbacks(dashapp):
 
 
         return figure
+
 
 
 
