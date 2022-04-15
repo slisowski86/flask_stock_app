@@ -287,3 +287,30 @@ for cols in price_df.loc[:,price_df.columns!='macd']:
 def get_df_name(df):
     name =[x for x in globals() if globals()[x] is df][0]
     return name
+
+
+
+
+
+def fibonacci(n):
+    # Check is n is less
+    # than 0
+    FibArray = [0, 1]
+    if n <= 0:
+        print("Incorrect input")
+
+    # Check is n is less
+    # than len(FibArray)
+    elif n <= len(FibArray):
+        return FibArray[n - 1]
+    else:
+        temp_fib = fibonacci(n - 1) + fibonacci(n - 2)
+        FibArray.append(temp_fib)
+        return temp_fib
+
+
+# Driver Program
+print(fibonacci(6))
+
+for i in range(1,10):
+    print(fibonacci(i))

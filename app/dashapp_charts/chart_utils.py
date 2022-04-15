@@ -54,7 +54,7 @@ def make_subplot_candle(df, company, interval, indicator):
 
 
     figure = make_subplots(rows=3, cols=1,
-                           vertical_spacing=0.042,
+                           vertical_spacing=0.05,
                            subplot_titles=(str(company) + ' ' + interval, 'Volume', indicator),
                            row_width=[0.17,0.17, 0.58])
     figure.update_layout(height=900)
@@ -82,7 +82,7 @@ def make_subplot_candle(df, company, interval, indicator):
 
 def make_subplot_line(df, company, interval):
     figure = make_subplots(rows=3, cols=1,
-                           vertical_spacing=0.042,
+                           vertical_spacing=0.05,
                            subplot_titles=(str(company) + ' ' + interval, 'Volume',),
                            row_width=[0.17,0.17, 0.58],
 
@@ -100,7 +100,7 @@ def make_subplot_line(df, company, interval):
     figure.update_layout(xaxis_rangeslider_visible=False)
     return figure
 
-def make_figure(figure,df):
+def add_indicator_subplot(figure,df):
     indicators_df=df.copy()
     indicators_df.drop(df.loc[:, 'Open':'Volume'], inplace=True, axis=1)
     for col in indicators_df.loc[:,indicators_df.columns!='Date']:

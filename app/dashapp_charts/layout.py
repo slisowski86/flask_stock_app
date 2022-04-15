@@ -127,7 +127,7 @@ sidebar = [
     dbc.Card(
         id="sidebar-card",
         children=[
-            dbc.CardHeader("Tools"),
+            dbc.CardHeader("Chart properties"),
             dbc.CardBody(
                 [
 
@@ -156,7 +156,7 @@ sidebar = [
                 {'label':'candlestick','value':'candle'}
             ], value='candle'),
             html.Label('Choose indicator'),
-        dcc.Dropdown(indicators_list(), id='indicators_2'),
+        dcc.Dropdown(indicators_list(), id='indicators'),
 
 
 
@@ -177,23 +177,28 @@ sidebar = [
                         data=[
                         ],
                         editable=True,
-                        row_deletable=True
+                        row_deletable=True,
 
-                    )]),
+
+
+                    )], hidden=True),
             html.Div(id='fibo_div', children=[
             html.Label('Additional options'),
-            dcc.Dropdown(id='fibo_dropdown', multi=True, options=[
-       {'label': 'Fibonacci retracements', 'value': 'fibo_retr'},
-       {'label': 'Fibonacci time zones', 'value': 'fibo_time'}
+            dcc.Dropdown(id='fibo_dropdown', options=[
 
-   ])])
+       {'label': 'Fibonacci retracements', 'value': 'fibo_retr'}
+
+
+   ], clearable=True)],hidden=False),
+            html.Label("Pick low candle for fibo 0%",id='fibo_low_desc', hidden=True, style={'color':'red'}),
+            html.Label("Pick high candle for fibo 100%",id='fibo_high_desc', hidden=True, style={'color':'red'})
             ])])]
 
 chart = [
     dbc.Card(
         id="segmentation-card",
         children=[
-            dbc.CardHeader("Viewer"),
+            dbc.CardHeader("Stock Chart"),
             dbc.CardBody(
                 [
                     html.Div(
@@ -211,6 +216,7 @@ chart = [
                                                            "drawopenpath",
                                                            "eraseshape",
                                                        ],
+
 
                                                        'displaylogo':False
                                                    },

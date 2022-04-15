@@ -2,7 +2,7 @@ import json
 
 import psycopg2
 from plotly.subplots import make_subplots
-
+from dash import dash_table
 import app
 from config import BaseConfig
 from dash import dcc, html, Dash, dash
@@ -66,7 +66,7 @@ def register_callbacks(dashapp):
     @dashapp.callback([Output('price_df', 'data'),
                        Output('interval','value')],
                         [Input('stock_dropdown', 'value'),
-                         Input('indicators_2','value'),
+                         Input('indicators','value'),
 
                        Input('period_dropdown', 'value')])
     def make_price_df(company, indicator, period_value):
@@ -182,13 +182,15 @@ def register_callbacks(dashapp):
     @dashapp.callback(Output('stock_graph', 'figure'),
                       [
                           Input('price_df', 'data'),
-                          Input('indicators_2','value'),
+                          Input('indicators','value'),
                           Input('interval','value'),
                           Input('stock_dropdown', 'value'),
                         Input('chart_type_dropdown', 'value'),
                         Input('period_dropdown', 'value'),
                           Input('memory-table', 'data'),
                           Input('stock_graph', 'clickData'),
+                          Input('fibo_dropdown','value')
+
 
 
 
@@ -196,7 +198,7 @@ def register_callbacks(dashapp):
 
     def update_figure(price_df, indicator, interval_df,company,
                       chart_type,
-                      period_value, data, clicked):
+                      period_value, data, clicked, fibo_value):
 
 
         price_df = pd.read_json(price_df, orient='split')
@@ -213,21 +215,31 @@ def register_callbacks(dashapp):
 
 
 
+
             figure=make_subplot_candle(price_df,company,interval,indicator)
 
-            if clicked is not None:
-                fibo_levels=[0.236,0.382,0.5,0.618,0.786]
-                if len(data)==1:
+
+
+
+            fibo_levels=[0.236,0.382,0.5,0.618,0.786]
+            if len(data)==1:
+
+                if fibo_value=='fibo_retr':
                     figure.add_hline(y=data[0]['y_low'], row=1, col='all')
-                elif len(data)==2:
+
+            elif len(data)==2:
+
+                if fibo_value== 'fibo_retr':
                     figure.add_hline(y=data[0]['y_low'], row=1, col='all')
                     figure.add_hline(y=data[1]['y_high'], row=1, col='all')
                     fib_diff=data[1]['y_high']-data[0]['y_low']
                     for y_line in fibo_levels:
                         figure.add_hline(y=data[0]['y_low']+(fib_diff*y_line),line_dash='dot', row=1, col='all',annotation_text=str(round(y_line*100,1))+"%",
 
-          annotation_position="bottom right")
-                    figure.add_scatter(y=[data[0]['y_low'], data[1]['y_high']], x=[data[0]['x'],data[1]['x']], mode='lines' )
+  annotation_position="bottom right")
+                    figure.add_scatter(y=[data[0]['y_low'], data[1]['y_high']], x=[data[0]['x'],data[1]['x']], mode='lines', showlegend=False)
+
+
 
 
 
@@ -235,7 +247,7 @@ def register_callbacks(dashapp):
 
 
             if indicator is not None:
-                make_figure(figure,price_df)
+                add_indicator_subplot(figure,price_df)
 
 
 
@@ -244,8 +256,9 @@ def register_callbacks(dashapp):
         else:
 
             figure = make_subplot_line(price_df,company,interval)
+
             if indicator is not None:
-                make_figure(figure, price_df)
+                add_indicator_subplot(figure, price_df)
 
         if period_value <= 12:
             figure.update_xaxes(rangebreaks=[dict(values=diff_dates(price_df, 'Date'))])
@@ -271,7 +284,7 @@ def register_callbacks(dashapp):
         if clickedData is None:
             raise PreventUpdate
 
-
+        points = points or {'clicks': 0, 'y_high': 0, 'y_low': 0, 'x': 0}
 
         points = points or {'clicks': 0, 'y_high':0, 'y_low':0,'x':0}
 
@@ -286,19 +299,79 @@ def register_callbacks(dashapp):
 
     @dashapp.callback(
         Output('memory-table', 'data'),
+        Output('stock_graph','clickData'),
+
         Input('stock_graph', 'clickData'),
         Input('click-data','data'),
-
-
-
         State('memory-table', 'data'),
-        State('memory-table', 'columns'))
-    def add_row(n_clicks, data, rows, columns):
+        State('memory-table', 'columns'),
+        Input('fibo_dropdown','value'))
+
+    def add_row(n_clicks, data, rows, columns, fibo_value):
 
         if n_clicks is not None:
 
-            rows.append({c['id']: data[c['name']] for c in columns})
-        return rows
+            if fibo_value=='fibo_retr':
+                print(fibo_value)
+                rows.append({c['id']: data[c['name']] for c in columns})
+                if len(rows)>2:
+                    rows.clear()
+        if fibo_value is None:
+            rows.clear()
+
+
+
+
+
+        return rows, None
+    @dashapp.callback(Output('fibo_dropdown','value'),
+                      Output('count-data', 'children'),
+
+                      Input('stock_dropdown','value'),
+                      Input('period_dropdown','value')
+                      )
+
+    def clear_fibo(company, period):
+        points_df = pd.DataFrame(columns=['clicks', 'y_low', 'y_high', 'x'])
+        return "", [dash_table.DataTable(
+                        id='memory-table',
+                        columns=[{
+                            'name': i,
+                            'id': i,
+                            'deletable': True,
+                            'renamable': True
+                        } for i in points_df.columns],
+                        data=[
+                        ],
+                        editable=True,
+                        row_deletable=True,
+
+
+                    )]
+
+    @dashapp.callback(Output('fibo_div','hidden'),
+                      Input('chart_type_dropdown','value'))
+    def hide_fibo_line_chart(chart_type):
+        if chart_type=='line':
+            return True
+
+    @dashapp.callback(Output('fibo_low_desc', 'hidden'),
+                      Output('fibo_high_desc', 'hidden'),
+
+                      Input('fibo_dropdown', 'value'),
+                      Input('memory-table','data'))
+    def show_fibo_low_desc(fibo_value,data):
+        if fibo_value=='fibo_retr' and len(data)==0:
+            return False, True
+
+        elif fibo_value == 'fibo_retr' and len(data) == 1:
+            return True,False
+        else:
+            return True, True
+
+
+
+
 
 
 
