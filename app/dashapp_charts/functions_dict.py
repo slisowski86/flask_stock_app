@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import timedelta, datetime
-
+from talib import *
 import bs4
 import pandas as pd
 import requests
@@ -101,13 +101,14 @@ for dict in list_of_dicts:
 
     for i in range(len(dict['arg'])):
 
+
         price=price_df[dict['arg'][i].capitalize()]
         to_calc.append(price)
     for i in range(len(dict['cols'])):
         if len(dict['cols'])==1:
-            price_df[dict['cols'][i]]=globals()[dict['name']](*to_calc)
+            price_df[dict['cols'][i]]=locals()[dict['name']](*to_calc)
         else:
-            price_df[dict['cols'][i]] = globals()[dict['name']](*to_calc)[i]
+            price_df[dict['cols'][i]] = locals()[dict['name']](*to_calc)[i]
 
     to_calc_all.append(to_calc)
 
@@ -154,8 +155,8 @@ for i in range(len(indicators)):
 
 print(func_dict)
 
-with open("func_dict.json", "w") as outfile:
-    json.dump(func_dict, outfile, cls=NumpyEncoder)
+#with open("func_dict.json", "w") as outfile:
+    #json.dump(func_dict, outfile, cls=NumpyEncoder)
 
 
 
@@ -163,5 +164,3 @@ with open("func_dict.json", "w") as outfile:
 def get_df_name(df):
     name =[x for x in globals() if globals()[x] is df][0]
     return name
-indicators_tresholds={'ADX':25,
-                      }

@@ -181,7 +181,7 @@ sidebar = [
 
 
 
-                    )], hidden=True),
+                    )], hidden=False),
             html.Div(id='fibo_div', children=[
             html.Label('Additional options'),
             dcc.Dropdown(id='fibo_dropdown', options=[
@@ -190,8 +190,8 @@ sidebar = [
 
 
    ], clearable=True)],hidden=False),
-            html.Label("Pick low candle for fibo 0%",id='fibo_low_desc', hidden=True, style={'color':'red'}),
-            html.Label("Pick high candle for fibo 100%",id='fibo_high_desc', hidden=True, style={'color':'red'})
+            html.Label("Pick high candle for fibo 0%",id='fibo_low_desc', hidden=True, style={'color':'red'}),
+            html.Label("Pick low candle for fibo 100%",id='fibo_high_desc', hidden=True, style={'color':'red'})
             ])])]
 
 chart = [

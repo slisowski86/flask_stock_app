@@ -1,25 +1,14 @@
+from datetime import timedelta
 
-
-import psycopg2
-from plotly.subplots import make_subplots
-
-import app
-from config import BaseConfig
-from dash import dcc, html, Dash, dash
-import dash
-import plotly.express as px
-from dash.dependencies import Input, Output, State
 import pandas as pd
-from datetime import timedelta, datetime
-from sqlalchemy import func
-from dateutil.relativedelta import relativedelta
 import plotly.graph_objects as go
-from app.models import Stock_price
-from dash.exceptions import PreventUpdate
+from plotly.subplots import make_subplots
 from sqlalchemy import create_engine
+from sqlalchemy import func
 from sqlalchemy.orm import sessionmaker
-from .indicators import *
 
+from app.models import Stock_price
+from config import BaseConfig
 
 engine = create_engine(BaseConfig.SQLALCHEMY_DATABASE_URI)
 Session = sessionmaker(bind=engine)
@@ -73,9 +62,6 @@ def make_subplot_candle(df, company, interval, indicator):
 
     figure.update_xaxes(range=update_xaxes_range(df, 'Date'))
     figure.update_layout(xaxis_rangeslider_visible=False)
-
-
-
 
     return figure
 
