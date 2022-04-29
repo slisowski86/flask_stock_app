@@ -142,6 +142,7 @@ sidebar = [
             {'label':'3m','value':3},
             {'label':'6m','value':6},
             {'label':'1y','value':12},
+            {'label':'2y','value':24},
             {'label':'3y','value':36},
             {'label':'5y','value':60},
             {'label':'10y','value':120},
@@ -181,7 +182,7 @@ sidebar = [
 
 
 
-                    )], hidden=False),
+                    )], hidden=True),
             html.Div(id='fibo_div', children=[
             html.Label('Additional options'),
             dcc.Dropdown(id='fibo_dropdown', options=[

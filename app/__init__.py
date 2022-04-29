@@ -41,7 +41,7 @@ def register_dashapps(server):
                          server=server,
                         external_stylesheets=external_stylesheets,
                         assets_folder='/home/slisowski/PycharmProjects/flask_stock_app/app/dashapp_charts/assets',
-                         url_base_pathname='/dashboard/',
+                         url_base_pathname='/',
                          meta_tags=[meta_viewport])
 
     with server.app_context():
