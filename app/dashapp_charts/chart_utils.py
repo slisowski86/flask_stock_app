@@ -8,7 +8,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import sessionmaker
 
 from app.models import Stock_price
-from config import BaseConfig
+from app.config import BaseConfig
 
 engine = create_engine(BaseConfig.SQLALCHEMY_DATABASE_URI)
 Session = sessionmaker(bind=engine)

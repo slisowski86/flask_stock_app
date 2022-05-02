@@ -1,16 +1,13 @@
-import json
 import re
 from datetime import timedelta, datetime
-from talib import *
 import bs4
 import pandas as pd
 import requests
-from numpyencoder import NumpyEncoder
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.models import Stock_price
-from config import BaseConfig
+from app.config import BaseConfig
 
 engine=create_engine(BaseConfig.SQLALCHEMY_DATABASE_URI)
 Session = sessionmaker(bind=engine)

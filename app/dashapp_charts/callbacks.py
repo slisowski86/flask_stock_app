@@ -1,25 +1,13 @@
 import json
 
-import psycopg2
-from plotly.subplots import make_subplots
 from dash import dash_table
-import app
-from config import BaseConfig
-from dash import dcc, html, Dash, dash
-import dash
-import plotly.express as px
 from dash.dependencies import Input, Output, State
-import pandas as pd
-from datetime import timedelta, datetime
-from sqlalchemy import func, create_engine
-from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import plotly.graph_objects as go
 from .chart_utils import *
 from ..models import Stock_price
 
 from dash.exceptions import PreventUpdate
-from ..extensions import db
 from talib import *
 def register_callbacks(dashapp):
     # function to find days with stock market sessions
@@ -73,7 +61,7 @@ def register_callbacks(dashapp):
 
         #dictionary with indicator features needed to calculate indicator column
         if indicator is not None:
-            with open('func_dict.json') as json_file:
+            with open('app/dashapp_charts/func_dict.json') as json_file:
                 indicators_dict = json.load(json_file)
 
             print(indicators_dict[indicator]['name'])
@@ -89,7 +77,7 @@ def register_callbacks(dashapp):
             indicator_start_id = session.execute(
                 "WITH CTE AS (SELECT id, trade_date FROM stock_price WHERE name=:company AND trade_date BETWEEN :start_date AND :end_date FETCH FIRST ROW ONLY ) SELECT id-:ind_period FROM CTE",
                 {'company': company, 'ind_period': int(indicators_period_value), 'start_date': start_date_period,
-                 'end_date': company_max_date(company)}).all()
+                 'end_date': company_max_date(company)}).fetchall()
             back_date_id = indicator_start_id[0][0]
             if back_date_id <= 0:
                 back_date_id = 1

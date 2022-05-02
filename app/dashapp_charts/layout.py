@@ -1,16 +1,15 @@
-from dash import dcc, html, Dash, dash, dash_table
+from dash import dcc, html, dash_table
 import json
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import NullPool
-from config import BaseConfig
+from app.config import BaseConfig
 from ..models import Company, Stock_price
 from sqlalchemy import func
 import dash_bootstrap_components as dbc
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
+
+
 #from .functions_dict import func_dict
 
 
@@ -39,7 +38,7 @@ def max_date():
     max_date=max_date[0]
     return max_date
 def indicators_list():
-    with open('func_dict.json') as json_file:
+    with open('app/dashapp_charts/func_dict.json') as json_file:
         indicators_dict = json.load(json_file)
 
     return [key for key in indicators_dict.keys()]

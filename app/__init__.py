@@ -1,19 +1,18 @@
 import dash
 from flask import Flask
-from flask.helpers import get_root_path
-import os
-from config import BaseConfig
+from app.config import BaseConfig
 import dash_bootstrap_components as dbc
 
 from app.extensions import db
 import os
-assets_path = os.getcwd() +'/dashapp_charts/assets'
+#assets_path = os.getcwd() +'/dashapp_charts/assets'
+assets_path = 'app/dashapp_charts/assets'
 print(assets_path)
 
 
 def create_app():
     server=Flask(__name__)
-
+    server.run(host='0.0.0.0', debug=True)
 
     server.config.from_object(BaseConfig)
     db.init_app(server)
