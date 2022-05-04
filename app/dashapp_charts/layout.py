@@ -232,7 +232,7 @@ layout=html.Div(children=[
     dbc.Container(
     [
         dbc.Row(id="app-content",
-                children=[dbc.Col(sidebar, md=4), dbc.Col(chart, md=8)]),
+                children=[dbc.Col(sidebar, md=3), dbc.Col(chart, md=9)]),
         dbc.Row(dbc.Col(meta)),
     ], fluid=True
     ),

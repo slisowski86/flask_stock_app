@@ -12,7 +12,7 @@ print(assets_path)
 
 def create_app():
     server=Flask(__name__)
-    server.run(host='0.0.0.0', debug=True)
+
 
     server.config.from_object(BaseConfig)
     db.init_app(server)
